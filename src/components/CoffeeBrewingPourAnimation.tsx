@@ -33,24 +33,24 @@ export const CoffeeBrewingPourAnimation: React.FC<CoffeeBrewingPourAnimationProp
     <div className="w-full max-w-xl mx-auto flex flex-col items-center">
       {/* Header status */}
       <div className="text-center mb-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100/80 border border-amber-200/80 text-amber-900 text-xs font-semibold mb-3">
-          <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#F6F1EA] border border-[#E8DEC8] text-[#644B37] text-xs font-semibold mb-3">
+          <span className="w-2 h-2 rounded-full bg-[#A5754A] animate-pulse" />
           <span>Dispensing Brew · Slot {order.slot}</span>
         </div>
-        <h2 className="font-serif-display text-3xl sm:text-4xl font-bold text-stone-900 tracking-tight">
+        <h2 className="font-serif-display text-3xl sm:text-4xl font-bold text-[#442713] tracking-tight">
           Pouring your {order.drinkName}
         </h2>
-        <p className="text-sm text-stone-600 mt-2 max-w-md mx-auto">
-          Please keep your cup positioned under <strong className="text-stone-900">Slot {order.slot}</strong>. The automated airpot servo is dispensing fresh coffee.
+        <p className="text-sm text-[#644B37] mt-2 max-w-md mx-auto">
+          Please keep your cup positioned under <strong className="text-[#442713]">Slot {order.slot}</strong>. The automated airpot servo is dispensing fresh coffee.
         </p>
       </div>
 
       {/* Animation Stage */}
-      <div className="relative w-full max-w-md h-96 flex items-center justify-center bg-gradient-to-b from-stone-50/60 to-amber-50/30 rounded-3xl border border-stone-200/70 p-6 shadow-inner overflow-hidden">
+      <div className="relative w-full max-w-md h-96 flex items-center justify-center bg-gradient-to-b from-[#F7F2EB] to-[#ECE2D6] rounded-[36px] border border-[#E8DEC8] p-6 shadow-inner overflow-hidden">
         
         {/* Subtle background ambient rings */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-72 h-72 rounded-full bg-amber-100/40 blur-3xl animate-pulse" />
+          <div className="w-72 h-72 rounded-full bg-[#B18A61]/20 blur-3xl animate-pulse" />
         </div>
 
         {/* SVG Drawing of Dispenser Nozzle + Stream + Branded Takeaway Cup */}
@@ -61,19 +61,19 @@ export const CoffeeBrewingPourAnimation: React.FC<CoffeeBrewingPourAnimationProp
           <defs>
             {/* Coffee stream gradient */}
             <linearGradient id="coffeeStreamGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#4A2511" />
-              <stop offset="35%" stopColor="#8C4A20" />
-              <stop offset="65%" stopColor="#B3662A" />
-              <stop offset="100%" stopColor="#3E1E0D" />
+              <stop offset="0%" stopColor="#442713" />
+              <stop offset="35%" stopColor="#644B37" />
+              <stop offset="65%" stopColor="#A5754A" />
+              <stop offset="100%" stopColor="#442713" />
             </linearGradient>
 
             {/* Coffee liquid surface gradient */}
             <linearGradient id="cremaGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#B87333" />
-              <stop offset="20%" stopColor="#E09F5A" />
-              <stop offset="50%" stopColor="#F4BE7E" />
-              <stop offset="80%" stopColor="#D98E45" />
-              <stop offset="100%" stopColor="#9E5B23" />
+              <stop offset="0%" stopColor="#A5754A" />
+              <stop offset="25%" stopColor="#B18A61" />
+              <stop offset="50%" stopColor="#D4B08C" />
+              <stop offset="75%" stopColor="#B18A61" />
+              <stop offset="100%" stopColor="#644B37" />
             </linearGradient>
 
             {/* Paper cup gradient shading for 3D cylinder depth */}
@@ -311,9 +311,9 @@ export const CoffeeBrewingPourAnimation: React.FC<CoffeeBrewingPourAnimationProp
         </svg>
 
         {/* Live Filling Gauge Pill */}
-        <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-xs px-3 py-1.5 rounded-xl border border-stone-200 shadow-xs flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
-          <span className="font-mono text-xs font-semibold text-stone-800 tabular-nums">
+        <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-[#E8DEC8] shadow-xs flex items-center gap-2">
+          <div className="w-2.5 h-2.5 rounded-full bg-[#A5754A] animate-ping" />
+          <span className="font-mono text-xs font-bold text-[#442713] tabular-nums">
             {progressPercent}% Filled
           </span>
         </div>
@@ -322,17 +322,17 @@ export const CoffeeBrewingPourAnimation: React.FC<CoffeeBrewingPourAnimationProp
       {/* Progress bar and details */}
       <div className="w-full max-w-md mt-6 space-y-3">
         {/* Fill bar */}
-        <div className="w-full bg-stone-200/80 rounded-full h-2.5 overflow-hidden p-0.5">
+        <div className="w-full bg-[#E8DEC8]/80 rounded-full h-2.5 overflow-hidden p-0.5">
           <div
-            className="h-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-700 rounded-full transition-all duration-300 ease-out"
+            className="h-full bg-gradient-to-r from-[#A5754A] via-[#B18A61] to-[#442713] rounded-full transition-all duration-300 ease-out"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
 
         {/* Spec line */}
-        <div className="flex items-center justify-between text-xs text-stone-500 pt-1">
-          <span className="font-medium text-stone-700">Slot {order.slot} · {order.drinkName}</span>
-          <span className="font-mono tabular-nums text-stone-600">
+        <div className="flex items-center justify-between text-xs text-[#644B37] pt-1">
+          <span className="font-semibold text-[#442713]">Slot {order.slot} · {order.drinkName}</span>
+          <span className="font-mono tabular-nums text-[#644B37]">
             {order.presses} servo presses (~{volumeMl} ml)
           </span>
         </div>

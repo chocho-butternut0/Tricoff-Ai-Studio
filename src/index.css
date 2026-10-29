@@ -3,30 +3,43 @@
 /* ── Tailwind v4 class-based dark mode ─────────────────────────────── */
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  --background: #FFFFFF;
+  --coffee-dark: #442713;
+  --coffee-caramel: #A5754A;
+  --coffee-medium: #B18A61;
+  --coffee-brown: #644B37;
+}
+
 @theme {
-  --font-display: Georgia, "Times New Roman", serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, "Cascadia Code", "Courier New", monospace;
+
+  --color-coffee-dark: #442713;
+  --color-coffee-caramel: #A5754A;
+  --color-coffee-medium: #B18A61;
+  --color-coffee-brown: #644B37;
 }
 
 @layer base {
   body {
     font-family: var(--font-sans);
-    /* Light mode defaults */
-    background-color: #F5F0EA;
-    color: #3B1F0A;
+    background-color: var(--background);
+    color: var(--coffee-dark);
+    letter-spacing: -0.012em;
     transition: background-color 0.2s ease, color 0.2s ease;
   }
 
-  /* Dark mode body */
   .dark body {
     background-color: #120F0D;
     color: #FBF9F5;
   }
 
-  h1, h2, h3, .font-serif-display {
+  h1, h2, h3, h4, .font-serif-display {
     font-family: var(--font-display);
     text-wrap: balance;
+    letter-spacing: -0.028em;
   }
 }
 
@@ -34,37 +47,37 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Admin panel surfaces (light + dark) ───────────────────────────── */
+/* ── Admin panel surfaces (aligned with coffee theme) ───────────────── */
 @layer components {
   .admin-page {
-    @apply bg-[#F5F0EA] text-stone-800 dark:bg-[#0E0C0B] dark:text-[#FBF9F5];
+    @apply bg-[#FAF7F2] text-[#442713] dark:bg-[#0E0C0B] dark:text-[#FBF9F5];
   }
   .admin-header {
-    @apply bg-[#FBF7F2] border-b border-stone-200 dark:bg-[#120F0D] dark:border-stone-800/80;
+    @apply bg-white border-b border-[#E8DEC8]/80 dark:bg-[#120F0D] dark:border-stone-800/80;
   }
   .admin-card {
-    @apply bg-white border border-stone-200 rounded-2xl dark:bg-[#181412] dark:border-stone-800;
+    @apply bg-white border border-[#E8DEC8]/70 rounded-2xl dark:bg-[#181412] dark:border-stone-800;
   }
   .admin-inset {
-    @apply bg-[#F5F0EA] border border-stone-200 dark:bg-[#120F0D] dark:border-stone-800;
+    @apply bg-[#F6F1EA] border border-[#E8DEC8]/60 dark:bg-[#120F0D] dark:border-stone-800;
   }
   .admin-input {
-    @apply bg-white border border-stone-300 text-stone-800 placeholder:text-stone-400
-           focus:outline-none focus:border-amber-500/70 transition-colors
+    @apply bg-white border border-[#D5C2B0] text-[#442713] placeholder:text-stone-400
+           focus:outline-none focus:border-[#A5754A] transition-colors
            dark:bg-[#120F0D] dark:border-stone-700 dark:text-stone-100 dark:placeholder:text-stone-600;
   }
   .admin-btn-secondary {
-    @apply bg-stone-200 hover:bg-stone-300 text-stone-700 transition-colors cursor-pointer
+    @apply bg-[#EFE6DC] hover:bg-[#E4D7C8] text-[#442713] transition-colors cursor-pointer
            dark:bg-stone-800 dark:hover:bg-stone-700 dark:text-stone-300;
   }
   .admin-tab-active {
-    @apply bg-stone-200 text-stone-800 dark:bg-stone-700 dark:text-stone-100;
+    @apply bg-[#442713] text-white shadow-sm dark:bg-[#A5754A] dark:text-white;
   }
   .admin-quiet {
-    @apply text-stone-500 transition-colors hover:text-stone-800 dark:hover:text-stone-300;
+    @apply text-stone-500 transition-colors hover:text-[#442713] dark:hover:text-stone-300;
   }
-  .admin-text   { @apply text-stone-800 dark:text-stone-100; }
-  .admin-text-2 { @apply text-stone-600 dark:text-stone-300; }
-  .admin-text-3 { @apply text-stone-500 dark:text-stone-400; }
+  .admin-text   { @apply text-[#442713] dark:text-stone-100; }
+  .admin-text-2 { @apply text-[#644B37] dark:text-stone-300; }
+  .admin-text-3 { @apply text-[#B18A61] dark:text-stone-400; }
   .admin-faint  { @apply text-stone-400 dark:text-stone-600; }
 }

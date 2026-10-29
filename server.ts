@@ -176,23 +176,35 @@ export interface DrinkSpec {
   presses: number;
   price: number;
   description: string;
+  image: string;
+  badgeNote: string;
+  tags: string[];
 }
 
 const DRINKS: Record<DrinkId, DrinkSpec> = {
   regular: {
     id: 'regular', name: 'Regular Roast', shortLabel: 'Regular',
     slot: 1, line: 1, presses: PRESS_PER_CUP, price: 45,
-    description: 'Pure unsweetened highland Arabica blend',
+    description: 'Pure unsweetened highland Benguet Arabica extracted at 9 bars',
+    image: '/src/assets/images/tricoff_regular_cup_1793250304524.jpg',
+    badgeNote: 'Benguet Harvest · 88°C Hot',
+    tags: ['Benguet Arabica', 'Zero Sugar', '9-Bar Extract', '240 ml'],
   },
   sweetened: {
     id: 'sweetened', name: 'Sweetened Blend', shortLabel: 'Sweetened',
     slot: 2, line: 2, presses: PRESS_PER_CUP, price: 50,
-    description: 'Balanced roast with raw muscovado cane',
+    description: 'Balanced roast blended with warm Negros Occidental muscovado cane',
+    image: '/src/assets/images/tricoff_sweetened_cup_1793250304427.jpg',
+    badgeNote: 'Raw Muscovado Infusion · 87°C',
+    tags: ['Double Shot', 'Raw Muscovado', 'Caramel Crema', '240 ml'],
   },
   decaf: {
     id: 'decaf', name: 'Swiss Water Decaf', shortLabel: 'Decaf',
     slot: 3, line: 3, presses: PRESS_PER_CUP, price: 55,
-    description: '99.9% caffeine-free, isolated brew line',
+    description: '99.9% caffeine-free single-origin Swiss Water osmosis roast',
+    image: '/src/assets/images/tricoff_decaf_cup_1793250304874.jpg',
+    badgeNote: 'Pure Osmosis Decaf · 88°C Hot',
+    tags: ['Swiss Water', '99.9% Decaf', 'Low Acid', '240 ml'],
   },
 };
 
@@ -399,6 +411,9 @@ function failOrder(orderId: string): Order | null {
   const order = orders.get(orderId);
   if (!order) return null;
   order.status = 'failed';
+  if (activeOrderId === orderId) {
+    activeOrderId = null;
+  }
   saveStore();
   broadcast('order:failed', { orderId: order.id });
   return order;
@@ -422,83 +437,601 @@ function resetKiosk() {
 // ─── Payment page (self-contained HTML for customer's phone) ────────
 
 function buildPaymentPage(order: Order): string {
+  const drink = DRINKS[order.drink] || {
+    id: order.drink,
+    name: order.drinkName,
+    shortLabel: 'Coffee',
+    slot: order.slot,
+    line: order.line,
+    presses: order.presses,
+    price: order.price,
+    description: 'Freshly extracted highland craft coffee.',
+    image: '/src/assets/images/tricoff_regular_cup_1793250304524.jpg',
+    badgeNote: 'Benguet Harvest · 88°C Hot',
+    tags: ['Highland Arabica', '240 ml Cup', 'Hot Extraction'],
+  };
+
+  const tagsHtml = (drink.tags || ['Highland Harvest', '240 ml Cup'])
+    .map((tag) => `<span class="pill-chip">${tag}</span>`)
+    .join('');
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TRICOFF — Simulated Payment</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TRICOFF — Mobile QR Payment</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#120F0D;color:#FBF9F5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
-.card{max-width:380px;width:100%;background:#181412;border:1px solid #44403c;border-radius:1.25rem;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-.head{padding:1.75rem 1.5rem 1.25rem;text-align:center;border-bottom:1px solid #292524}
-.brand{font-size:1.875rem;font-weight:700;letter-spacing:-.03em}
-.sub{font-size:.75rem;color:#a8a29e;margin-top:.3rem}
-.body{padding:1.5rem}
-.order{background:#1D1815;border:1px solid #292524;border-radius:.875rem;padding:1.25rem;margin-bottom:1.5rem}
-.drink{font-size:1.375rem;font-weight:700;color:#FBF9F5}
-.desc{font-size:.8rem;color:#a8a29e;margin-top:.2rem}
-.slot-row{display:flex;align-items:center;gap:.75rem;margin-top:1rem;padding:.875rem;background:#120F0D;border-radius:.625rem}
-.slot-num{font-size:2.25rem;font-weight:800;color:#f59e0b;line-height:1;min-width:2.5rem;text-align:center}
-.slot-text{font-size:.875rem;color:#a8a29e}
-.price{font-size:1.75rem;font-weight:700;color:#f59e0b;margin-top:.875rem;font-variant-numeric:tabular-nums}
-.price-label{font-size:.75rem;color:#78716c;font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem}
-.btns{display:flex;flex-direction:column;gap:.75rem}
-.btn{padding:1rem;border:none;border-radius:.875rem;font-size:1.05rem;font-weight:600;cursor:pointer;transition:transform .08s,opacity .15s;width:100%}
-.btn:active{transform:scale(.97)}
-.pay{background:#059669;color:#fff}
-.fail{background:#292524;color:#a8a29e;border:1px solid #44403c}
-.note{font-size:.72rem;color:#78716c;text-align:center;margin-top:1.25rem;line-height:1.6}
-.result{padding:2.5rem 1.5rem;text-align:center;display:none}
-.result.show{display:block}
-.result .icon{font-size:2.5rem;margin-bottom:.75rem}
-.result .title{font-size:1.375rem;font-weight:700;margin-bottom:.4rem}
-.result .msg{font-size:.9rem;color:#a8a29e;line-height:1.5}
-.result.success .title{color:#34d399}
-.result.fail .title{color:#f87171}
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --background: #FFFFFF;
+    --coffee-dark: #442713;
+    --coffee-caramel: #A5754A;
+    --coffee-medium: #B18A61;
+    --coffee-brown: #644B37;
+    --border-color: #E8DEC8;
+    --bg-page: #FAF7F2;
+    --success: #059669;
+    --danger: #DC2626;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-page);
+    color: var(--coffee-dark);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 1rem 0.85rem;
+    -webkit-font-smoothing: antialiased;
+  }
+  .app-container {
+    width: 100%;
+    max-width: 410px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding-bottom: 2.5rem;
+  }
+  /* Top App Bar */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0.25rem;
+  }
+  .brand-lockup {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .brand-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: var(--coffee-dark);
+  }
+  .brand-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.2rem 0.5rem;
+    background: #F6F1EA;
+    color: var(--coffee-brown);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+  }
+  .security-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--coffee-dark);
+    background: #F6F1EA;
+    border: 1px solid var(--border-color);
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+  }
+
+  /* ── Reference Card Design adapted for Mobile Phone ── */
+  .product-ref-card {
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
+    border-radius: 32px;
+    padding: 0.75rem;
+    box-shadow: 0 10px 30px rgba(68, 39, 19, 0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow: hidden;
+  }
+  .ref-media-frame {
+    position: relative;
+    border-radius: 24px;
+    background: linear-gradient(180deg, #F7F2EB 0%, #ECE2D6 100%);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    aspect-ratio: 4/3.2;
+  }
+  .ref-price-badge {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: #FFFFFF;
+    padding: 0.35rem 0.9rem;
+    border-radius: 0 24px 0 16px;
+    border-left: 1px solid rgba(232, 222, 200, 0.8);
+    border-bottom: 1px solid rgba(232, 222, 200, 0.8);
+    font-weight: 900;
+    font-size: 1.25rem;
+    color: var(--coffee-dark);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    z-index: 2;
+  }
+  .ref-slot-badge {
+    position: absolute;
+    top: 0.65rem;
+    left: 0.65rem;
+    background: rgba(255, 255, 255, 0.92);
+    font-family: ui-monospace, monospace;
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--coffee-dark);
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    z-index: 2;
+  }
+  .ref-cup-img {
+    height: 135px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 18px rgba(68, 39, 19, 0.2));
+    margin: auto 0;
+    z-index: 1;
+  }
+  .ref-ribbon {
+    width: 100%;
+    background: rgba(177, 138, 97, 0.28);
+    backdrop-filter: blur(4px);
+    color: var(--coffee-dark);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.45rem 0.6rem;
+    text-align: center;
+    border-top: 1px solid rgba(177, 138, 97, 0.25);
+    z-index: 2;
+  }
+  .ref-content {
+    padding: 0.25rem 0.4rem 0.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .ref-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ref-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--coffee-dark);
+    letter-spacing: -0.01em;
+  }
+  .ref-order-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--coffee-caramel);
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+  }
+  .ref-desc {
+    font-size: 0.75rem;
+    color: var(--coffee-brown);
+    line-height: 1.4;
+  }
+  .pills-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid rgba(232, 222, 200, 0.7);
+  }
+  .pill-chip {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--coffee-brown);
+    background: #F6F1EA;
+    border: 1px solid var(--border-color);
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+  }
+
+  /* Kiosk Slot Notice */
+  .slot-banner {
+    background: #FAF7F2;
+    border: 1px solid var(--border-color);
+    border-radius: 1.25rem;
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .slot-banner-num {
+    background: var(--coffee-dark);
+    color: #FFFFFF;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+  }
+  .slot-banner-text {
+    font-size: 0.75rem;
+    color: var(--coffee-brown);
+    line-height: 1.4;
+  }
+  .slot-banner-text strong {
+    color: var(--coffee-dark);
+    font-weight: 800;
+  }
+
+  /* Payment Source Simulator Selector */
+  .app-picker-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--coffee-brown);
+    margin-bottom: 0.5rem;
+  }
+  .app-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .app-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    border-radius: 1rem;
+    border: 1.5px solid var(--border-color);
+    background: #FFFFFF;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .app-option.selected {
+    border-color: var(--coffee-caramel);
+    background: #F6F1EA;
+    box-shadow: 0 4px 12px rgba(165, 117, 74, 0.12);
+  }
+  .app-left {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--coffee-dark);
+  }
+  .app-badge-dot {
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 50%;
+    background: var(--coffee-caramel);
+  }
+  .app-balance {
+    font-size: 0.75rem;
+    color: var(--coffee-brown);
+    font-family: ui-monospace, monospace;
+    font-weight: 600;
+  }
+
+  /* Action Buttons */
+  .action-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin-top: 0.25rem;
+  }
+  .btn {
+    width: 100%;
+    padding: 1.05rem;
+    border-radius: 1.15rem;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.15s ease;
+    border: none;
+  }
+  .btn:active {
+    transform: scale(0.98);
+  }
+  .btn-pay {
+    background: var(--coffee-dark);
+    color: #FFFFFF;
+    box-shadow: 0 6px 18px rgba(68, 39, 19, 0.25);
+  }
+  .btn-pay:hover {
+    background: var(--coffee-brown);
+  }
+  .btn-cancel {
+    background: transparent;
+    color: var(--coffee-brown);
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.65rem;
+  }
+  .btn-cancel:hover {
+    color: var(--danger);
+  }
+
+  /* Result Screens */
+  .result-view {
+    display: none;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
+    border-radius: 32px;
+    box-shadow: 0 10px 30px rgba(68, 39, 19, 0.06);
+  }
+  .result-view.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .result-icon-circle {
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+  }
+  .result-icon-circle.success {
+    background: #ECFDF5;
+    border: 2px solid #A7F3D0;
+    color: #059669;
+  }
+  .result-icon-circle.fail {
+    background: #FEF2F2;
+    border: 2px solid #FECACA;
+    color: #DC2626;
+  }
+  .result-title {
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+  }
+  .result-msg {
+    font-size: 0.85rem;
+    color: var(--coffee-brown);
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+    max-width: 300px;
+  }
+  .status-pill {
+    background: #FAF7F2;
+    border: 1px solid var(--border-color);
+    border-radius: 1.25rem;
+    padding: 1rem;
+    width: 100%;
+    text-align: left;
+    font-size: 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+  .status-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.4rem;
+  }
+  .status-row:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Spinner */
+  .spinner {
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2.5px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #FFFFFF;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="head">
-    <div class="brand">TRICOFF</div>
-    <div class="sub">Self-Service Coffee Kiosk · Simulated Payment</div>
-  </div>
-  <div class="body" id="body">
-    <div class="order">
-      <div class="drink">${order.drinkName}</div>
-      <div class="desc">${DRINKS[order.drink].description}</div>
-      <div class="slot-row">
-        <span class="slot-num">${order.slot}</span>
-        <span class="slot-text">Place your cup in this slot</span>
+<div class="app-container">
+  
+  {/* Top App Bar */}
+  <header class="top-bar">
+    <div class="brand-lockup">
+      <span class="brand-title">TRICOFF</span>
+      <span class="brand-tag">REV. 2 EXPRESS</span>
+    </div>
+    <div class="security-pill">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span>QRPh & InstaPay</span>
+    </div>
+  </header>
+
+  {/* Active Order Stage */}
+  <main id="orderBody" style="display:flex; flex-direction:column; gap:1rem;">
+    
+    {/* Product Reference Card */}
+    <article class="product-ref-card">
+      <div class="ref-media-frame">
+        <div class="ref-price-badge">${order.price}₱</div>
+        <div class="ref-slot-badge">Slot ${order.slot}</div>
+        <img src="${drink.image}" alt="${order.drinkName}" class="ref-cup-img">
+        <div class="ref-ribbon">${drink.badgeNote || 'Benguet Harvest · 88°C Hot'}</div>
       </div>
-      <div class="price-label">Amount (simulated)</div>
-      <div class="price">₱${order.price}.00</div>
+
+      <div class="ref-content">
+        <div class="ref-title-row">
+          <h2 class="ref-title">${order.drinkName}</h2>
+          <span class="ref-order-tag">Order Ready ↗</span>
+        </div>
+        <p class="ref-desc">${drink.description}</p>
+        
+        <div class="pills-row">
+          ${tagsHtml}
+        </div>
+      </div>
+    </article>
+
+    {/* Kiosk Slot Notice */}
+    <div class="slot-banner">
+      <div class="slot-banner-num">${order.slot}</div>
+      <div class="slot-banner-text">
+        Place your 240 ml takeaway paper cup under <strong>Slot ${order.slot}</strong> on the kiosk. Dispenser activates upon payment.
+      </div>
     </div>
-    <div class="btns">
-      <button class="btn pay" onclick="doPay()">Pay</button>
-      <button class="btn fail" onclick="doFail()">Fail</button>
+
+    {/* Simulated Payment Account Picker */}
+    <div>
+      <div class="app-picker-label">Pay from (Simulated Account)</div>
+      <div class="app-options">
+        <div class="app-option selected" onclick="selectApp(this, 'GCash')">
+          <div class="app-left">
+            <span class="app-badge-dot"></span>
+            <span>GCash (0995 028 ••••)</span>
+          </div>
+          <span class="app-balance">₱1,250.00</span>
+        </div>
+        <div class="app-option" onclick="selectApp(this, 'Maya')">
+          <div class="app-left">
+            <span class="app-badge-dot" style="background:var(--coffee-medium)"></span>
+            <span>Maya Wallet</span>
+          </div>
+          <span class="app-balance">₱3,400.00</span>
+        </div>
+        <div class="app-option" onclick="selectApp(this, 'BPI')">
+          <div class="app-left">
+            <span class="app-badge-dot" style="background:var(--coffee-brown)"></span>
+            <span>BPI Vybe / Online</span>
+          </div>
+          <span class="app-balance">₱8,120.00</span>
+        </div>
+      </div>
     </div>
-    <p class="note">This is a simulated payment — no real money changes hands.<br>Tap Pay to tell the kiosk to pour your coffee. Tap Fail to cancel.</p>
+
+    {/* Action Buttons */}
+    <div class="action-group">
+      <button class="btn btn-pay" id="payBtn" onclick="executePayment()">
+        <span>Authorize & Pay ₱${order.price}.00</span>
+      </button>
+      <button class="btn btn-cancel" onclick="executeCancel()">
+        <span>Decline & Cancel Order</span>
+      </button>
+    </div>
+  </main>
+
+  {/* Success View */}
+  <div class="result-view" id="successView">
+    <div class="result-icon-circle success">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h2 class="result-title" style="color:var(--coffee-dark)">Payment Approved</h2>
+    <p class="result-msg">
+      ₱${order.price}.00 authorized via <strong id="selectedAppName">GCash</strong>.<br>
+      Your <strong>${order.drinkName}</strong> is pouring at the kiosk now!
+    </p>
+
+    <div class="status-pill">
+      <div class="status-row">
+        <span style="color:var(--coffee-brown)">Order Reference</span>
+        <span style="font-family:ui-monospace, monospace; font-weight:700">${order.id}</span>
+      </div>
+      <div class="status-row">
+        <span style="color:var(--coffee-brown)">Dispenser Location</span>
+        <span style="color:var(--coffee-caramel); font-weight:800">Slot ${order.slot} (Line ${order.line})</span>
+      </div>
+      <div class="status-row">
+        <span style="color:var(--coffee-brown)">Status</span>
+        <span style="color:#059669; font-weight:800">Dispensing in Progress</span>
+      </div>
+    </div>
+
+    <p style="font-size:0.75rem; color:var(--coffee-brown); line-height:1.4">
+      Please wait at the kiosk machine. Your cup will be filled to ~240 ml.
+    </p>
   </div>
-  <div class="result" id="result"></div>
+
+  {/* Cancelled View */}
+  <div class="result-view" id="cancelView">
+    <div class="result-icon-circle fail">
+      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </div>
+    <h2 class="result-title" style="color:var(--danger)">Order Cancelled</h2>
+    <p class="result-msg">
+      The transaction for ${order.id} has been safely cancelled. No charges were made to your account.
+    </p>
+    <p style="font-size:0.75rem; color:var(--coffee-brown)">
+      You can initiate a new order at the TRICOFF kiosk terminal.
+    </p>
+  </div>
 </div>
+
 <script>
 var orderId = ${JSON.stringify(order.id)};
-function doPay(){
-  document.getElementById('body').style.display='none';
-  var r=document.getElementById('result');
-  r.className='result show success';
-  r.innerHTML='<div class="icon">✓</div><div class="title">Payment successful</div><div class="msg">Your coffee is being poured.<br>Please wait at the kiosk — slot ${order.slot}.</div>';
-  fetch('/api/orders/'+orderId+'/pay',{method:'POST'}).catch(function(){});
+var selectedSource = 'GCash';
+
+function selectApp(el, name) {
+  document.querySelectorAll('.app-option').forEach(function(o) { o.classList.remove('selected'); });
+  el.classList.add('selected');
+  selectedSource = name;
 }
-function doFail(){
-  document.getElementById('body').style.display='none';
-  var r=document.getElementById('result');
-  r.className='result show fail';
-  r.innerHTML='<div class="icon">✕</div><div class="title">Payment failed</div><div class="msg">No coffee will be poured.<br>You can start a new order at the kiosk.</div>';
-  fetch('/api/orders/'+orderId+'/fail',{method:'POST'}).catch(function(){});
+
+function executePayment() {
+  var btn = document.getElementById('payBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div><span>Authorizing payment...</span>';
+
+  fetch('/api/orders/' + orderId + '/pay', { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      document.getElementById('orderBody').style.display = 'none';
+      document.getElementById('selectedAppName').innerText = selectedSource;
+      document.getElementById('successView').classList.add('active');
+    })
+    .catch(function() {
+      // Fallback display in case network glitch
+      document.getElementById('orderBody').style.display = 'none';
+      document.getElementById('selectedAppName').innerText = selectedSource;
+      document.getElementById('successView').classList.add('active');
+    });
+}
+
+function executeCancel() {
+  fetch('/api/orders/' + orderId + '/fail', { method: 'POST' })
+    .finally(function() {
+      document.getElementById('orderBody').style.display = 'none';
+      document.getElementById('cancelView').classList.add('active');
+    });
 }
 </script>
 </body>
@@ -510,17 +1043,62 @@ function buildNotFoundPage(): string {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TRICOFF — Order Not Found</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TRICOFF — Order Expired</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:#120F0D;color:#FBF9F5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
-.card{max-width:340px;text-align:center}
-h1{font-size:1.5rem;font-weight:700;margin-bottom:.5rem}
-p{color:#a8a29e;font-size:.9rem;line-height:1.5}
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --background: #FFFFFF;
+    --coffee-dark: #442713;
+    --coffee-caramel: #A5754A;
+    --coffee-medium: #B18A61;
+    --coffee-brown: #644B37;
+    --border-color: #E8DEC8;
+    --bg-page: #FAF7F2;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg-page);
+    color: var(--coffee-dark);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .card {
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
+    border-radius: 32px;
+    padding: 2.5rem 1.75rem;
+    max-width: 380px;
+    box-shadow: 0 10px 30px rgba(68,39,19,0.06);
+  }
+  .icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: #F6F1EA;
+    color: var(--coffee-caramel);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+  }
+  h1 { font-size: 1.35rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--coffee-dark); }
+  p { font-size: 0.85rem; color: var(--coffee-brown); line-height: 1.5; }
 </style>
 </head>
-<body><div class="card"><h1>Order not found</h1><p>This order may have expired or the server restarted. Please start a new order at the kiosk screen.</p></div></body>
+<body>
+<div class="card">
+  <div class="icon">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  </div>
+  <h1>Ticket Expired</h1>
+  <p>This payment session has concluded or timed out. Please initiate a new order on the TRICOFF kiosk touchscreen.</p>
+</div>
+</body>
 </html>`;
 }
 

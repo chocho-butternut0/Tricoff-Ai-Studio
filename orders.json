@@ -1,6 +1,79 @@
 {
-  "counter": 1057,
+  "counter": 1063,
   "orders": [
+    {
+      "id": "TRC-1062",
+      "drink": "regular",
+      "drinkName": "Regular Roast",
+      "slot": 1,
+      "line": 1,
+      "presses": 8,
+      "price": 45,
+      "status": "failed",
+      "createdAt": "2026-10-29T07:43:18.843Z",
+      "qrUrl": "http://192.168.4.200:3000/pay/TRC-1062"
+    },
+    {
+      "id": "TRC-1061",
+      "drink": "sweetened",
+      "drinkName": "Sweetened Blend",
+      "slot": 2,
+      "line": 2,
+      "presses": 8,
+      "price": 50,
+      "status": "failed",
+      "createdAt": "2026-10-29T07:13:11.321Z",
+      "qrUrl": "http://192.168.4.200:3000/pay/TRC-1061",
+      "paidAt": "2026-10-29T07:14:33.041Z"
+    },
+    {
+      "id": "TRC-1060",
+      "drink": "regular",
+      "drinkName": "Regular Roast",
+      "slot": 1,
+      "line": 1,
+      "presses": 8,
+      "price": 45,
+      "status": "failed",
+      "createdAt": "2026-10-29T05:30:21.998Z",
+      "qrUrl": "http://192.168.4.200:3000/pay/TRC-1060"
+    },
+    {
+      "id": "TRC-1059",
+      "drink": "sweetened",
+      "drinkName": "Sweetened Blend",
+      "slot": 2,
+      "line": 2,
+      "presses": 8,
+      "price": 50,
+      "status": "created",
+      "createdAt": "2026-10-29T04:59:32.787Z",
+      "qrUrl": "http://192.168.4.200:3000/pay/TRC-1059"
+    },
+    {
+      "id": "TRC-1058",
+      "drink": "sweetened",
+      "drinkName": "Sweetened Blend",
+      "slot": 2,
+      "line": 2,
+      "presses": 8,
+      "price": 50,
+      "status": "created",
+      "createdAt": "2026-10-29T04:56:28.561Z",
+      "qrUrl": "http://192.168.4.200:3000/pay/TRC-1058"
+    },
+    {
+      "id": "TRC-1057",
+      "drink": "sweetened",
+      "drinkName": "Sweetened Blend",
+      "slot": 2,
+      "line": 2,
+      "presses": 8,
+      "price": 50,
+      "status": "created",
+      "createdAt": "2026-10-29T04:55:06.110Z",
+      "qrUrl": "http://192.168.4.200:3000/pay/TRC-1057"
+    },
     {
       "id": "TRC-1056",
       "drink": "regular",

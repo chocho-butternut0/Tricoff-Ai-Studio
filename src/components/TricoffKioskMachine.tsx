@@ -1,19 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import {
-  Wifi,
-  WifiOff,
   CheckCircle2,
   XCircle,
   RotateCcw,
   X,
   Loader2,
-  ArrowRight,
   ArrowLeft,
-  ShieldCheck,
-  ExternalLink,
   Clock,
-  Sparkles,
 } from 'lucide-react';
 import tricoffLogo from '../assets/images/tricoff_logo.svg';
 import type { DrinkId } from '../data/tricoffData';
@@ -118,79 +111,46 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF7F2] text-stone-900 flex flex-col font-sans selection:bg-amber-200">
+    <div className="h-screen w-screen overflow-y-auto lg:overflow-hidden bg-white text-[#442713] flex flex-col font-sans selection:bg-[#E8DEC8]">
       
-      {/* ── Top Bar ── */}
-      <header className="px-6 sm:px-10 py-4 bg-white/80 backdrop-blur-md border-b border-stone-200/80 sticky top-0 z-30 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <img
-            src={tricoffLogo}
-            alt="TRICOFF Coffee"
-            className="h-9 sm:h-10 w-auto"
-          />
-          <div className="hidden sm:block h-6 w-px bg-stone-200" />
-          <p className="text-xs text-stone-500 font-medium tracking-tight hidden sm:block">
-            Self-Service Coffee Kiosk · Benguet & Bukidnon Harvest · 240 ml
-          </p>
-        </div>
-
-        <div className="flex items-center gap-4 sm:gap-6">
-          {/* Live machine status */}
-          <div className="flex items-center gap-2">
-            <span
-              className={`w-2.5 h-2.5 rounded-full ${
-                machineOnline || esp32Mock ? 'bg-emerald-500' : 'bg-red-500 animate-pulse'
-              }`}
-            />
-            <span className="text-xs font-semibold text-stone-700 hidden md:inline">
-              {machineOnline || esp32Mock ? 'Kiosk Ready' : 'Machine Offline'}
-            </span>
-          </div>
-
-          {/* Admin link */}
-          <Link
-            to="/admin"
-            className="text-xs font-medium text-stone-500 hover:text-stone-900 transition-colors py-1.5 px-3 rounded-lg hover:bg-stone-100"
-          >
-            Admin
-          </Link>
-        </div>
-      </header>
-
       {/* Offline Alert Banner */}
       {!machineOnline && !esp32Mock && (
-        <div className="px-6 py-3 bg-red-50 border-b border-red-200 text-center">
-          <p className="text-sm text-red-700 font-medium">
+        <div className="px-6 py-2 bg-red-50 border-b border-red-200 text-center shrink-0">
+          <p className="text-xs sm:text-sm text-red-700 font-medium">
             Machine currently unavailable. Waiting for hardware controller reconnect.
           </p>
         </div>
       )}
 
       {/* ── Main Kiosk Stage ── */}
-      <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-8 py-8 md:py-12">
-        <div className="w-full max-w-6xl mx-auto">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 md:px-8 py-3 md:py-5 w-full max-h-screen">
+        <div className="w-full max-w-5xl xl:max-w-6xl mx-auto my-auto flex flex-col justify-center">
 
           {/* ════════════════════════════════════════════════
               STATE 1: IDLE / PRODUCT SELECTION GRID
+              (Modeled faithfully from the reference card style)
           ════════════════════════════════════════════════ */}
           {showSelection && !(orderStatus === 'failed') && (
-            <div className="space-y-8 sm:space-y-10 animate-in fade-in duration-300">
+            <div className="space-y-4 md:space-y-6 animate-in fade-in duration-300 w-full my-auto">
               {/* Hero Banner Intro */}
-              <div className="text-center max-w-2xl mx-auto space-y-2.5">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100/70 border border-amber-200/70 text-amber-900 text-xs font-semibold">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Freshly Extracted · Automated 240 ml Cups</span>
+              <div className="text-center max-w-2xl mx-auto space-y-1.5 md:space-y-2">
+                <div className="flex items-center justify-center pb-0.5">
+                  <img
+                    src={tricoffLogo}
+                    alt="TRICOFF Coffee"
+                    className="h-11 sm:h-13 md:h-14 w-auto object-contain drop-shadow-xs"
+                  />
                 </div>
-                <h1 className="font-serif-display text-4xl sm:text-5xl font-bold text-stone-900 tracking-tight">
+                <h1 className="font-serif-display text-3xl sm:text-4xl lg:text-[40px] font-bold text-[#442713] tracking-tight leading-tight">
                   Select your coffee
                 </h1>
-                <p className="text-stone-600 text-sm sm:text-base leading-relaxed">
+                <p className="text-[#644B37] text-xs sm:text-sm leading-relaxed max-w-lg mx-auto">
                   Touch a craft brew to place your order. Instant QR payment activates our precision airpot dispenser.
                 </p>
               </div>
 
-              {/* 3-Column Drink Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 items-stretch">
+              {/* 3-Column Drink Cards with Reference Card Style */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 items-stretch">
                 {DRINKS.map((drink) => {
                   const disabled = (!machineOnline && !esp32Mock) || isCreating;
                   const isLoading = isCreating && pendingDrinkId === drink.id;
@@ -199,85 +159,75 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
                     <article
                       key={drink.id}
                       onClick={() => !disabled && handleSelect(drink.id)}
-                      className={`group relative rounded-3xl bg-white border border-stone-200/90 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden text-left cursor-pointer ${
-                        disabled ? 'opacity-60 pointer-events-none' : 'hover:-translate-y-1'
+                      className={`group relative rounded-[30px] sm:rounded-[34px] bg-[#FAF7F2] hover:bg-[#442713] p-3 sm:p-3.5 shadow-[0_8px_24px_rgba(68,39,19,0.06)] hover:shadow-[0_20px_40px_rgba(68,39,19,0.28)] transition-all duration-300 flex flex-col justify-between text-left cursor-pointer ${
+                        disabled ? 'opacity-60 pointer-events-none' : 'hover:-translate-y-1.5'
                       }`}
                     >
-                      {/* Slot & Code Header */}
-                      <div className="p-4 bg-stone-50/80 border-b border-stone-100 flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-amber-800 bg-amber-100/80 px-2 py-0.5 rounded-md font-mono">
+                      {/* Top Media Frame with Coffee-tinted Backdrop & Organic Curved Layer */}
+                      <div className="relative rounded-[22px] sm:rounded-[26px] overflow-hidden bg-gradient-to-b from-white to-[#EDE5D8] group-hover:from-[#5A3820] group-hover:to-[#442713] transition-colors duration-300 flex flex-col items-center justify-between pt-3 pb-0 aspect-[4/3] sm:aspect-[4/3.1] select-none">
+                        
+                        {/* Slot Badge in Top-Left (no harsh outline) */}
+                        <div className="absolute top-2.5 left-2.5 z-10">
+                          <span className="font-mono text-[10px] sm:text-[11px] font-bold text-[#442713] group-hover:text-white bg-white/95 group-hover:bg-black/35 backdrop-blur-xs px-2.5 py-0.5 rounded-full shadow-2xs transition-colors duration-300">
                             Slot {drink.slot}
                           </span>
-                          <span className="text-stone-400">·</span>
-                          <span className="font-mono text-stone-500">{drink.functionCode}</span>
-                        </div>
-                        <span className="text-stone-500 font-medium">{drink.volume}</span>
-                      </div>
-
-                      {/* Branded Product Image Frame */}
-                      <div className="relative aspect-[4/3] w-full bg-[#FAF8F5] overflow-hidden flex items-center justify-center p-3">
-                        <ResilientImage
-                          src={drink.image}
-                          alt={`${drink.name} served in a white paper TRICOFF cup`}
-                          fallbackTitle={drink.name}
-                          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-                        />
-                      </div>
-
-                      {/* Card Details */}
-                      <div className="p-6 flex flex-col flex-1">
-                        <div className="flex items-baseline justify-between gap-3 mb-1">
-                          <h3 className="font-serif-display text-2xl font-bold text-stone-900 group-hover:text-amber-800 transition-colors">
-                            {drink.name}
-                          </h3>
-                          <span className="font-mono text-2xl font-extrabold text-amber-700 tabular-nums shrink-0">
-                            ₱{drink.price}.00
-                          </span>
                         </div>
 
-                        <p className="text-xs font-semibold text-stone-500 mb-2">
-                          {drink.subtitle}
-                        </p>
+                        {/* Beverage Cup Image with Gentle Hover Depth */}
+                        <div className="relative w-full h-full flex items-center justify-center p-2 z-0">
+                          <ResilientImage
+                            src={drink.image}
+                            alt={`${drink.name} served in a white paper TRICOFF cup`}
+                            fallbackTitle={drink.name}
+                            className="w-full h-full max-h-36 sm:max-h-40 md:max-h-44 object-contain drop-shadow-[0_10px_18px_rgba(68,39,19,0.16)] group-hover:scale-105 group-hover:-translate-y-1 transition-transform duration-500 ease-out"
+                          />
+                        </div>
 
-                        <p className="text-xs text-stone-600 leading-relaxed mb-4 flex-1">
-                          {drink.description}
-                        </p>
+                        {/* Layered Curved Ribbon across bottom of photo container (no outline) */}
+                        <div className="w-full bg-[#B18A61]/20 group-hover:bg-black/30 backdrop-blur-xs text-[#442713] group-hover:text-white/90 text-[10px] sm:text-[11px] font-medium py-1.5 px-3 text-center flex items-center justify-center gap-1.5 z-10 transition-colors duration-300">
+                          <span>{drink.badgeNote}</span>
+                        </div>
+                      </div>
 
-                        {/* Tasting Notes */}
-                        <div className="pt-3 border-t border-stone-100 space-y-1.5 text-xs text-stone-600 mb-5">
-                          <div className="flex items-center justify-between">
-                            <span className="text-stone-400">Profile</span>
-                            <span className="font-medium text-stone-800 truncate max-w-[180px]">
-                              {drink.sweetnessProfile}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-stone-400">Notes</span>
-                            <span className="text-stone-700 truncate max-w-[180px]">
-                              {drink.tastingNotes}
-                            </span>
+                      {/* Card Lower Content Area */}
+                      <div className="px-1.5 pt-3 pb-0.5 flex flex-col flex-1 justify-between">
+                        <div>
+                          {/* Drink Title & Price on the Side */}
+                          <div className="flex items-start justify-between gap-3 mb-1">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="font-sans text-lg sm:text-xl font-bold text-[#442713] group-hover:text-white tracking-tight transition-colors duration-300 leading-tight">
+                                {drink.name}
+                              </h3>
+                              <p className="text-xs text-[#644B37] group-hover:text-[#D8C7B5] font-medium line-clamp-1 mt-0.5 transition-colors duration-300">
+                                {drink.subtitle}
+                              </p>
+                            </div>
+
+                            <div className="shrink-0 flex items-center gap-1.5 pt-0.5">
+                              {isLoading ? (
+                                <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#A5754A] group-hover:text-[#E8DEC8]">
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                </span>
+                              ) : (
+                                <span className="font-sans font-black text-2xl sm:text-[26px] text-[#442713] group-hover:text-white tracking-tight tabular-nums leading-none transition-colors duration-300">
+                                  {drink.price}₱
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
 
-                        {/* Large Touch-friendly Button */}
-                        <button
-                          type="button"
-                          disabled={disabled}
-                          className="w-full py-3.5 px-4 rounded-2xl bg-stone-900 group-hover:bg-amber-700 text-white font-semibold text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-sm"
-                        >
-                          {isLoading ? (
-                            <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              <span>Preparing order…</span>
-                            </>
-                          ) : (
-                            <>
-                              <span>Select {drink.shortLabel}</span>
-                              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                            </>
-                          )}
-                        </button>
+                        {/* Tactile Pills Row (Zero outline, clean soft pills) */}
+                        <div className="flex flex-wrap items-center gap-1.5 pt-2 mt-1">
+                          {drink.tags.map((tag) => (
+                            <span
+                              key={tag}
+                              className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-medium bg-white/90 text-[#644B37] group-hover:bg-white/15 group-hover:text-white/95 shadow-2xs transition-colors duration-300"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </article>
                   );
@@ -291,25 +241,25 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
               (Clean, non-cluttered, two large touchscreen options)
           ════════════════════════════════════════════════ */}
           {orderStatus === 'created' && order && paymentStep === 'select' && (
-            <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in zoom-in-98 duration-200 text-center">
+            <div className="max-w-3xl mx-auto space-y-6 sm:space-y-8 animate-in fade-in zoom-in-98 duration-200 text-center my-auto">
               
               {/* Screen Title & Countdown */}
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100/70 border border-amber-200/70 text-amber-900 text-xs font-semibold">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FAF7F2] text-[#644B37] text-xs font-semibold">
                   <span>Step 1 of 2 · Payment Method</span>
                 </div>
 
-                <h2 className="font-serif-display text-3xl sm:text-4xl font-bold text-stone-900 tracking-tight">
+                <h2 className="font-serif-display text-3xl sm:text-4xl font-bold text-[#442713] tracking-tight">
                   Select a payment method
                 </h2>
                 
-                <p className="text-sm text-stone-600 max-w-lg mx-auto">
-                  Ordering <strong className="text-stone-900">{order.drinkName}</strong> (₱{order.price}.00) for{' '}
-                  <strong className="text-amber-800">Slot {order.slot}</strong>. Choose a payment option to generate your QR code.
+                <p className="text-sm text-[#644B37] max-w-lg mx-auto">
+                  Ordering <strong className="text-[#442713]">{order.drinkName}</strong> (₱{order.price}.00) for{' '}
+                  <strong className="text-[#A5754A]">Slot {order.slot}</strong>. Choose a payment option to generate your QR code.
                 </p>
 
                 {idleSecondsLeft !== null && (
-                  <p className="text-xs font-mono text-stone-400 tabular-nums flex items-center justify-center gap-1.5 pt-1">
+                  <p className="text-xs font-mono text-[#B18A61] tabular-nums flex items-center justify-center gap-1.5 pt-1">
                     <Clock className="w-3.5 h-3.5" />
                     <span>Expires in {Math.floor(idleSecondsLeft / 60)}:{String(idleSecondsLeft % 60).padStart(2, '0')}</span>
                   </p>
@@ -323,40 +273,34 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
                 <button
                   type="button"
                   onClick={() => handleSelectRail('QRPh')}
-                  className="group relative p-6 sm:p-8 rounded-3xl bg-white border-2 border-stone-200/90 hover:border-amber-500 hover:shadow-xl transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                  className="group relative p-6 sm:p-8 rounded-[32px] bg-[#FAF7F2] hover:bg-[#F2ECE2] shadow-[0_10px_30px_rgba(68,39,19,0.06)] hover:shadow-[0_20px_40px_rgba(68,39,19,0.12)] transition-all duration-200 cursor-pointer flex flex-col justify-between hover:-translate-y-1"
                 >
                   <div>
                     {/* Header: Logo mark + price tag */}
                     <div className="flex items-center justify-between mb-4">
-                      <div className="px-3.5 py-1.5 rounded-xl bg-blue-50 border border-blue-200/80 flex items-center gap-1.5">
+                      <div className="px-3.5 py-1.5 rounded-xl bg-blue-50 flex items-center gap-1.5">
                         <span className="font-extrabold text-base tracking-wider leading-none">
                           <span className="text-[#0038A8]">QR</span>
                           <span className="text-[#CE1126]">Ph</span>
                         </span>
                         <div className="w-2.5 h-1 rounded-full bg-[#FCD116]" />
                       </div>
-                      <span className="font-mono text-2xl font-bold text-amber-700 tabular-nums">
+                      <span className="font-mono text-2xl font-bold text-[#442713] tabular-nums">
                         ₱{order.price}.00
                       </span>
                     </div>
 
-                    <h3 className="font-serif-display text-2xl font-bold text-stone-900 group-hover:text-amber-800 transition-colors">
+                    <h3 className="font-serif-display text-2xl font-bold text-[#442713] group-hover:text-[#A5754A] transition-colors">
                       QRPh Standard
                     </h3>
                     
-                    <p className="text-xs text-stone-500 font-medium mt-1 mb-3">
+                    <p className="text-xs text-[#B18A61] font-semibold mt-1 mb-3">
                       National QR Standard · All BSP E-Wallets & Banks
                     </p>
 
-                    <p className="text-xs text-stone-600 leading-relaxed">
+                    <p className="text-xs text-[#644B37] leading-relaxed">
                       Pay instantly with GCash, Maya, ShopeePay, GoTyme, GrabPay, BPI Vybe, and any BSP-licensed QRPh app.
                     </p>
-                  </div>
-
-                  {/* Touch CTA */}
-                  <div className="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between text-xs font-semibold text-amber-700 group-hover:text-amber-800">
-                    <span>Pay with QRPh</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
                   </div>
                 </button>
 
@@ -364,37 +308,31 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
                 <button
                   type="button"
                   onClick={() => handleSelectRail('InstaPay')}
-                  className="group relative p-6 sm:p-8 rounded-3xl bg-white border-2 border-stone-200/90 hover:border-amber-500 hover:shadow-xl transition-all duration-200 cursor-pointer flex flex-col justify-between"
+                  className="group relative p-6 sm:p-8 rounded-[32px] bg-[#FAF7F2] hover:bg-[#F2ECE2] shadow-[0_10px_30px_rgba(68,39,19,0.06)] hover:shadow-[0_20px_40px_rgba(68,39,19,0.12)] transition-all duration-200 cursor-pointer flex flex-col justify-between hover:-translate-y-1"
                 >
                   <div>
                     {/* Header: Logo mark + price tag */}
                     <div className="flex items-center justify-between mb-4">
-                      <div className="px-3.5 py-1.5 rounded-xl bg-red-50 border border-red-200/80 flex items-center gap-1">
+                      <div className="px-3.5 py-1.5 rounded-xl bg-red-50 flex items-center gap-1">
                         <span className="font-extrabold text-sm text-[#00529B] leading-none">insta</span>
                         <span className="font-black text-sm text-[#E11931] leading-none">Pay</span>
                       </div>
-                      <span className="font-mono text-2xl font-bold text-amber-700 tabular-nums">
+                      <span className="font-mono text-2xl font-bold text-[#442713] tabular-nums">
                         ₱{order.price}.00
                       </span>
                     </div>
 
-                    <h3 className="font-serif-display text-2xl font-bold text-stone-900 group-hover:text-amber-800 transition-colors">
+                    <h3 className="font-serif-display text-2xl font-bold text-[#442713] group-hover:text-[#A5754A] transition-colors">
                       InstaPay Transfer
                     </h3>
 
-                    <p className="text-xs text-stone-500 font-medium mt-1 mb-3">
+                    <p className="text-xs text-[#B18A61] font-semibold mt-1 mb-3">
                       Direct Mobile Banking · Universal Interbank QR
                     </p>
 
-                    <p className="text-xs text-stone-600 leading-relaxed">
+                    <p className="text-xs text-[#644B37] leading-relaxed">
                       Pay using BDO Pay, BPI, UnionBank, Metrobank, LandBank, RCBC, Chinabank, and all participating InstaPay apps.
                     </p>
-                  </div>
-
-                  {/* Touch CTA */}
-                  <div className="mt-6 pt-4 border-t border-stone-100 flex items-center justify-between text-xs font-semibold text-amber-700 group-hover:text-amber-800">
-                    <span>Pay with InstaPay</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1.5 transition-transform" />
                   </div>
                 </button>
 
@@ -405,7 +343,7 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="py-3 px-6 rounded-2xl bg-white hover:bg-stone-100 text-stone-600 hover:text-stone-900 border border-stone-200/80 text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
+                  className="py-3 px-6 rounded-2xl bg-[#FAF7F2] hover:bg-[#F2ECE2] text-[#644B37] hover:text-[#442713] text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer shadow-xs"
                 >
                   <X className="w-4 h-4" />
                   <span>Cancel Order</span>
@@ -421,132 +359,102 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
                quiet zone QR, scanner frame, and waiting state)
           ════════════════════════════════════════════════ */}
           {orderStatus === 'created' && order && paymentStep === 'qr' && (
-            <div className="max-w-xl mx-auto rounded-3xl bg-white border border-stone-200 shadow-xl overflow-hidden animate-in fade-in duration-200">
+            <div className="w-full max-w-lg sm:max-w-xl mx-auto rounded-[32px] sm:rounded-[36px] bg-[#FAF7F2] shadow-[0_20px_50px_rgba(68,39,19,0.1)] overflow-hidden animate-in fade-in duration-200 my-auto">
               
               {/* Header Navigation: Back + Cancel */}
-              <div className="px-6 py-4 bg-stone-50/70 border-b border-stone-200/80 flex items-center justify-between">
+              <div className="px-6 py-3 bg-[#F2ECE2] flex items-center justify-between">
                 <button
                   type="button"
                   onClick={handleBackToSelect}
-                  className="inline-flex items-center gap-1.5 py-2 px-3 rounded-xl text-stone-700 hover:text-stone-950 hover:bg-stone-200/60 transition-colors text-xs font-semibold cursor-pointer"
+                  className="inline-flex items-center gap-1.5 py-1 px-3 rounded-lg text-[#644B37] hover:text-[#442713] hover:bg-white/70 transition-colors text-xs font-semibold cursor-pointer"
                 >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Change payment method</span>
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Change method</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="inline-flex items-center gap-1.5 py-2 px-3 rounded-xl text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors text-xs font-medium cursor-pointer"
+                  className="inline-flex items-center gap-1 py-1 px-3 rounded-lg text-stone-400 hover:text-red-600 hover:bg-red-50 transition-colors text-xs font-medium cursor-pointer"
                 >
-                  <X className="w-4 h-4" />
-                  <span>Cancel order</span>
+                  <X className="w-3.5 h-3.5" />
+                  <span>Cancel</span>
                 </button>
               </div>
 
               {/* Main QR Screen Body */}
-              <div className="p-6 sm:p-8 flex flex-col items-center text-center">
+              <div className="px-6 py-5 sm:px-8 sm:py-6 flex flex-col items-center text-center">
                 
                 {/* Method Identification Badge */}
-                <div className="mb-3">
+                <div className="mb-2">
                   {selectedRail === 'QRPh' ? (
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80">
-                      <span className="font-extrabold text-xs tracking-wider">
+                    <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-blue-50">
+                      <span className="font-extrabold text-[11px] tracking-wider">
                         <span className="text-[#0038A8]">QR</span>
                         <span className="text-[#CE1126]">Ph</span>
                       </span>
                       <span className="text-stone-300">·</span>
-                      <span className="text-xs font-medium text-stone-700">National QR Standard</span>
+                      <span className="text-[11px] font-medium text-[#442713]">National QR Standard</span>
                     </div>
                   ) : (
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-50 border border-red-200/80">
-                      <span className="font-extrabold text-xs tracking-wider">
+                    <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-red-50">
+                      <span className="font-extrabold text-[11px] tracking-wider">
                         <span className="text-[#00529B]">insta</span>
                         <span className="text-[#E11931]">Pay</span>
                       </span>
                       <span className="text-stone-300">·</span>
-                      <span className="text-xs font-medium text-stone-700">Instant Bank Transfer</span>
+                      <span className="text-[11px] font-medium text-[#442713]">Instant Bank Transfer</span>
                     </div>
                   )}
                 </div>
 
                 {/* Primary Heading */}
-                <h2 className="font-serif-display text-3xl font-bold text-stone-900 tracking-tight">
+                <h2 className="font-sans text-2xl sm:text-[26px] font-bold text-[#442713] tracking-tight">
                   Scan to Pay
                 </h2>
 
                 {/* Specific Method Instruction */}
-                <p className="text-xs sm:text-sm text-stone-600 mt-1 max-w-sm">
+                <p className="text-xs sm:text-sm text-[#644B37] mt-0.5 max-w-sm">
                   {selectedRail === 'QRPh'
-                    ? 'Scan the QRPH code using your banking or e-wallet app.'
-                    : 'Scan the InstaPay QR code using your supported banking app.'}
+                    ? 'Scan using your banking or e-wallet app.'
+                    : 'Scan using your supported banking app.'}
                 </p>
 
                 {/* Prominent Amount */}
-                <div className="my-5 px-6 py-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-baseline justify-center gap-2">
-                  <span className="text-xs uppercase tracking-wider font-semibold text-amber-800">
+                <div className="my-3 px-5 py-2 rounded-xl bg-white shadow-2xs flex items-baseline justify-center gap-2">
+                  <span className="text-[11px] uppercase tracking-wider font-semibold text-[#644B37]">
                     Total Amount
                   </span>
-                  <span className="font-mono text-3xl font-bold text-amber-700 tabular-nums">
+                  <span className="font-mono text-2xl sm:text-3xl font-black text-[#442713] tabular-nums">
                     ₱{order.price}.00
                   </span>
                 </div>
 
                 {/* QR Code Container with Scanner Reticle Frame */}
-                <div className="relative p-5 bg-white rounded-2xl border border-stone-200 shadow-md">
-                  {/* Animated Scanner Corner Brackets */}
-                  <div className="absolute top-2 left-2 w-5 h-5 border-t-2 border-l-2 border-amber-500 rounded-tl-md" />
-                  <div className="absolute top-2 right-2 w-5 h-5 border-t-2 border-r-2 border-amber-500 rounded-tr-md" />
-                  <div className="absolute bottom-2 left-2 w-5 h-5 border-b-2 border-l-2 border-amber-500 rounded-bl-md" />
-                  <div className="absolute bottom-2 right-2 w-5 h-5 border-b-2 border-r-2 border-amber-500 rounded-br-md" />
+                <div className="relative p-3.5 bg-white rounded-2xl shadow-sm">
+                  {/* Animated Scanner Corner Brackets in Coffee Caramel */}
+                  <div className="absolute top-1.5 left-1.5 w-4 h-4 border-t-2 border-l-2 border-[#A5754A] rounded-tl-sm" />
+                  <div className="absolute top-1.5 right-1.5 w-4 h-4 border-t-2 border-r-2 border-[#A5754A] rounded-tr-sm" />
+                  <div className="absolute bottom-1.5 left-1.5 w-4 h-4 border-b-2 border-l-2 border-[#A5754A] rounded-bl-sm" />
+                  <div className="absolute bottom-1.5 right-1.5 w-4 h-4 border-b-2 border-r-2 border-[#A5754A] rounded-br-sm" />
 
                   {/* Gentle pulsing scanning line */}
-                  <div className="absolute inset-x-4 top-4 h-0.5 bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-75 animate-pulse pointer-events-none" />
+                  <div className="absolute inset-x-3 top-3 h-0.5 bg-gradient-to-r from-transparent via-[#A5754A] to-transparent opacity-75 animate-pulse pointer-events-none" />
 
                   {/* Scannable QR Matrix */}
                   <div className="flex items-center justify-center">
                     <QrCodeDisplay
                       value={order.qrUrl}
-                      size={230}
+                      size={200}
                       errorCorrectionLevel="M"
                     />
                   </div>
                 </div>
 
                 {/* Waiting State Indicator */}
-                <div className="mt-5 flex items-center justify-center gap-2 text-stone-700 text-xs font-semibold">
-                  <Loader2 className="w-4 h-4 text-amber-600 animate-spin" />
+                <div className="mt-3.5 flex items-center justify-center gap-2 text-[#442713] text-xs font-semibold">
+                  <Loader2 className="w-3.5 h-3.5 text-[#A5754A] animate-spin" />
                   <span>Waiting for payment…</span>
-                  <span className="text-stone-400 font-normal">cup slot unlocks automatically</span>
-                </div>
-
-                {/* Supported Apps Guide */}
-                <div className="mt-4 p-3 rounded-xl bg-stone-50 border border-stone-200/80 w-full text-[11px] text-stone-600">
-                  <p className="font-semibold text-stone-800 mb-0.5">
-                    {selectedRail === 'QRPh' ? 'Compatible Apps:' : 'Compatible Banking Apps:'}
-                  </p>
-                  <p className="text-stone-500 leading-relaxed">
-                    {selectedRail === 'QRPh'
-                      ? 'GCash · Maya · ShopeePay · GoTyme · BPI Vybe · GrabPay · All BSP QRPh apps'
-                      : 'BDO Pay · BPI · UnionBank · Metrobank · LandBank · RCBC · Any InstaPay app'}
-                  </p>
-                </div>
-
-                {/* In-Browser Test Link */}
-                <div className="mt-4 pt-3 border-t border-stone-100 w-full flex flex-col items-center">
-                  <a
-                    href={order.qrUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-amber-700 hover:text-amber-800 font-medium underline underline-offset-2 transition-colors cursor-pointer"
-                  >
-                    <span>Test checkout in browser (simulated payment)</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                  <p className="text-[10px] text-stone-400 mt-1 flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3 text-stone-500" />
-                    <span>Simulated QR payment · Unlocks kiosk dispenser on tap</span>
-                  </p>
                 </div>
 
               </div>
@@ -568,49 +476,49 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
               STATE 4: DONE — TAKE YOUR COFFEE
           ════════════════════════════════════════════════ */}
           {orderStatus === 'done' && order && (
-            <div className="max-w-lg mx-auto rounded-3xl bg-white border border-stone-200/90 shadow-xl p-8 sm:p-10 text-center space-y-6 animate-in zoom-in-95 duration-300">
-              <div className="w-20 h-20 rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center mx-auto shadow-inner">
+            <div className="max-w-lg mx-auto rounded-[36px] bg-[#FAF7F2] shadow-xl p-8 sm:p-10 text-center space-y-6 animate-in zoom-in-95 duration-300 my-auto">
+              <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mx-auto shadow-inner">
                 <CheckCircle2 className="w-10 h-10 text-emerald-600" />
               </div>
 
               <div className="space-y-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100/70 text-emerald-900 text-xs font-semibold">
+                <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-100/70 text-emerald-900 text-xs font-semibold">
                   <span>Brewing Complete</span>
                 </div>
-                <h2 className="font-serif-display text-3xl sm:text-4xl font-bold text-stone-900">
+                <h2 className="font-serif-display text-3xl sm:text-4xl font-bold text-[#442713]">
                   Your coffee is ready!
                 </h2>
-                <p className="text-sm text-stone-600">
-                  Please collect your freshly brewed cup from <strong className="text-stone-900">Slot {order.slot}</strong>.
+                <p className="text-sm text-[#644B37]">
+                  Please collect your freshly brewed cup from <strong className="text-[#442713]">Slot {order.slot}</strong>.
                 </p>
               </div>
 
               {/* Order receipt mini pill */}
-              <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-stone-200/80 text-xs space-y-1.5">
+              <div className="p-4 rounded-2xl bg-white shadow-2xs text-xs space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-stone-500">Drink</span>
-                  <span className="font-semibold text-stone-800">{order.drinkName}</span>
+                  <span className="text-[#644B37]">Drink</span>
+                  <span className="font-semibold text-[#442713]">{order.drinkName}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-stone-500">Cup Slot</span>
-                  <span className="font-mono font-bold text-amber-700">Slot {order.slot}</span>
+                  <span className="text-[#644B37]">Cup Slot</span>
+                  <span className="font-mono font-bold text-[#A5754A]">Slot {order.slot}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-stone-500">Amount</span>
-                  <span className="font-mono tabular-nums text-stone-700">₱{order.price}.00 (Settled)</span>
+                  <span className="text-[#644B37]">Amount</span>
+                  <span className="font-mono tabular-nums text-[#442713] font-bold">₱{order.price}.00 (Settled)</span>
                 </div>
               </div>
 
               <button
                 type="button"
                 onClick={handleReset}
-                className="w-full py-3.5 px-6 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
+                className="w-full py-4 px-6 rounded-2xl bg-[#442713] hover:bg-[#644B37] text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-md"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>Start New Order</span>
               </button>
 
-              <p className="text-xs text-stone-400">
+              <p className="text-xs text-[#B18A61]">
                 Kiosk automatically returns to menu in a few seconds…
               </p>
             </div>
@@ -620,16 +528,16 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
               STATE 5: FAILED / CANCELLED
           ════════════════════════════════════════════════ */}
           {orderStatus === 'failed' && order && (
-            <div className="max-w-md mx-auto rounded-3xl bg-white border border-stone-200/90 shadow-xl p-8 sm:p-10 text-center space-y-6 animate-in zoom-in-95 duration-200">
-              <div className="w-16 h-16 rounded-full bg-red-50 border border-red-200 flex items-center justify-center mx-auto">
+            <div className="max-w-md mx-auto rounded-[36px] bg-[#FAF7F2] shadow-xl p-8 sm:p-10 text-center space-y-6 animate-in zoom-in-95 duration-200 my-auto">
+              <div className="w-16 h-16 rounded-full bg-red-50 flex items-center justify-center mx-auto">
                 <XCircle className="w-8 h-8 text-red-500" />
               </div>
 
               <div className="space-y-1.5">
-                <h2 className="font-serif-display text-2xl font-bold text-stone-900">
+                <h2 className="font-serif-display text-2xl font-bold text-[#442713]">
                   Payment cancelled
                 </h2>
-                <p className="text-xs text-stone-500">
+                <p className="text-xs text-[#644B37]">
                   No coffee was dispensed and no charges were made.
                 </p>
               </div>
@@ -637,7 +545,7 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
               <button
                 type="button"
                 onClick={handleReset}
-                className="w-full py-3.5 px-6 rounded-2xl bg-amber-700 hover:bg-amber-600 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
+                className="w-full py-3.5 px-6 rounded-2xl bg-[#442713] hover:bg-[#644B37] text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer shadow-sm"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>Try Again</span>
@@ -647,20 +555,6 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
 
         </div>
       </main>
-
-      {/* ── Footer ── */}
-      <footer className="px-6 py-4 bg-white/70 border-t border-stone-200/80 flex flex-col sm:flex-row items-center justify-between text-xs text-stone-500 gap-2">
-        <span>TRICOFF Self-Service Coffee Kiosk · Rev. 2 Airpot System</span>
-        <div className="flex items-center gap-3">
-          <span className="font-mono text-[11px] text-stone-400">
-            {esp32Mock ? 'CONTROLLER: MOCK' : `CONTROLLER: ${machineOnline ? 'ONLINE' : 'OFFLINE'}`}
-          </span>
-          <span className="text-stone-300">·</span>
-          <Link to="/admin" className="hover:text-stone-800 transition-colors">
-            Operator Settings
-          </Link>
-        </div>
-      </footer>
 
     </div>
   );

@@ -16,6 +16,8 @@ export interface Drink {
   extractionSeconds: number;
   temperature: string;
   image: string;
+  badgeNote: string;
+  tags: string[];
 }
 
 export const VOLUME_ML = 200;
@@ -34,10 +36,12 @@ export const DRINKS: Drink[] = [
     volume: '240 ml',
     caffeine: '145 mg',
     sweetnessProfile: '0g Sugar · Unsweetened',
-    tastingNotes: 'Toasted cacao · Roasted hazelnut · Crisp fini...',
+    tastingNotes: 'Toasted cacao · Roasted hazelnut · Crisp finish',
     extractionSeconds: 32,
     temperature: '88°C',
     image: '/src/assets/images/tricoff_regular_cup_1793250304524.jpg',
+    badgeNote: 'Benguet Harvest · 88°C Hot',
+    tags: ['Benguet Arabica', 'Zero Sugar', '9-Bar Extract', '240 ml'],
   },
   {
     id: 'sweetened',
@@ -56,6 +60,8 @@ export const DRINKS: Drink[] = [
     extractionSeconds: 35,
     temperature: '87°C',
     image: '/src/assets/images/tricoff_sweetened_cup_1793250304427.jpg',
+    badgeNote: 'Raw Muscovado Infusion · 87°C',
+    tags: ['Double Shot', 'Raw Muscovado', 'Warm Caramel', '240 ml'],
   },
   {
     id: 'decaf',
@@ -74,5 +80,7 @@ export const DRINKS: Drink[] = [
     extractionSeconds: 36,
     temperature: '88°C',
     image: '/src/assets/images/tricoff_decaf_cup_1793250304874.jpg',
+    badgeNote: 'Pure Osmosis Decaf · 88°C Hot',
+    tags: ['Swiss Water', '99.9% Decaf', 'Low Acid', '240 ml'],
   },
 ];

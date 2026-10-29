@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Coffee, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Lock, Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
+import tricoffLogo from '../assets/images/tricoff_logo.svg';
 
 interface LoginPageProps {
   onLogin: (token: string) => void;
@@ -27,7 +28,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       if (data.ok) {
         onLogin(data.token);
       } else {
-        setError('Incorrect password. Try again.');
+        setError('Incorrect password. Please verify your credentials.');
         setPassword('');
       }
     } catch {
@@ -39,25 +40,38 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
   return (
     <div className="admin-page min-h-screen flex items-center justify-center p-4 relative">
+      <div className="absolute top-4 left-4">
+        <a
+          href="/kiosk"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors py-2 px-3 rounded-xl hover:bg-stone-200/60 dark:hover:bg-stone-800"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to Kiosk</span>
+        </a>
+      </div>
       <ThemeToggle className="absolute top-4 right-4" />
 
       <div className="w-full max-w-sm">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/30 mb-4">
-            <Coffee className="w-7 h-7 text-amber-600 dark:text-amber-400" />
-          </div>
-          <h1 className="font-serif-display text-3xl font-bold admin-text tracking-tight">
-            TRICOFF
+        <div className="text-center mb-8 flex flex-col items-center">
+          <img
+            src={tricoffLogo}
+            alt="TRICOFF"
+            className="h-10 w-auto mb-3"
+          />
+          <h1 className="font-serif-display text-2xl font-bold admin-text tracking-tight">
+            Kiosk Operations
           </h1>
-          <p className="text-sm admin-text-3 mt-1">Admin Panel</p>
+          <p className="text-xs admin-text-3 mt-1">
+            Hardware servo calibration & transaction ledger
+          </p>
         </div>
 
         {/* Card */}
-        <div className="admin-card p-7 shadow-2xl">
+        <div className="admin-card p-7 shadow-xl border border-[#E8DEC8]/80 dark:border-stone-800">
           <div className="flex items-center gap-2 mb-5">
-            <Lock className="w-4 h-4 admin-text-3" />
-            <h2 className="text-sm font-semibold admin-text-2">Sign in to continue</h2>
+            <Lock className="w-4 h-4 text-[#A5754A]" />
+            <h2 className="text-sm font-semibold admin-text-2">Operator Authentication</h2>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -97,7 +111,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             <button
               type="submit"
               disabled={loading || !password}
-              className="w-full py-3 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors cursor-pointer"
+              className="w-full py-3.5 rounded-xl bg-[#442713] hover:bg-[#644B37] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors cursor-pointer shadow-sm"
             >
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
@@ -106,7 +120,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
         <p className="text-center text-xs admin-faint mt-5">
           Kiosk screen runs at{' '}
-          <a href="/kiosk" target="_blank" className="text-amber-600 hover:text-amber-500 dark:text-amber-500 dark:hover:text-amber-400 underline">
+          <a href="/kiosk" target="_blank" className="text-[#A5754A] hover:text-[#442713] dark:text-[#B18A61] dark:hover:text-[#A5754A] underline font-medium">
             /kiosk
           </a>{' '}
           — no login required
