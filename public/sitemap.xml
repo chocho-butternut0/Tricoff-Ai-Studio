@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <!-- TRICOFF Homepage & Self-Service Kiosk Terminal -->
+  <url>
+    <loc>https://ais-pre-s2ziktnotkoxwc3xdigpxk-646610739631.asia-southeast1.run.app/</loc>
+    <lastmod>2026-10-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://ais-pre-s2ziktnotkoxwc3xdigpxk-646610739631.asia-southeast1.run.app/src/assets/images/tricoff_kiosk_hero_1790570765036.jpg</image:loc>
+      <image:title>TRICOFF Automated Self-Service Coffee Kiosk</image:title>
+      <image:caption>Commercial whole-bean coffee kiosk with QRPh and InstaPay payment interlock</image:caption>
+    </image:image>
+  </url>
+
+  <!-- TRICOFF Beverage Menu (Regular ₱45, Sweetened ₱50, Decaf ₱55) -->
+  <url>
+    <loc>https://ais-pre-s2ziktnotkoxwc3xdigpxk-646610739631.asia-southeast1.run.app/menu</loc>
+    <lastmod>2026-10-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://ais-pre-s2ziktnotkoxwc3xdigpxk-646610739631.asia-southeast1.run.app/src/assets/images/coffee_regular_brew_1790570780357.jpg</image:loc>
+      <image:title>Function 01: Regular Roast (₱45.00)</image:title>
+      <image:caption>Benguet Arabica and Bukidnon Robusta blend extracted at 9 bars</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://ais-pre-s2ziktnotkoxwc3xdigpxk-646610739631.asia-southeast1.run.app/src/assets/images/coffee_sweetened_brew_1790570794997.jpg</image:loc>
+      <image:title>Function 02: Sweetened Blend (₱50.00)</image:title>
+      <image:caption>Mt. Apo medium roast with Negros Occidental raw muscovado cane infusion</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://ais-pre-s2ziktnotkoxwc3xdigpxk-646610739631.asia-southeast1.run.app/src/assets/images/coffee_decaf_brew_1790570808857.jpg</image:loc>
+      <image:title>Function 03: Swiss Water Decaf (₱55.00)</image:title>
+      <image:caption>99.9% caffeine-free single-origin Arabica ground through isolated burrs</image:caption>
+    </image:image>
+  </url>
+
+  <!-- TRICOFF Cashless Payment Protocol (QRPh & InstaPay) -->
+  <url>
+    <loc>https://ais-pre-s2ziktnotkoxwc3xdigpxk-646610739631.asia-southeast1.run.app/payment-methods</loc>
+    <lastmod>2026-10-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- TRICOFF Live Order Queue & Real-Time Brewing Status -->
+  <url>
+    <loc>https://ais-pre-s2ziktnotkoxwc3xdigpxk-646610739631.asia-southeast1.run.app/queue</loc>
+    <lastmod>2026-10-14</lastmod>
+    <changefreq>always</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- TRICOFF Machine Hardware Specifications (Unit TRC-300PH) -->
+  <url>
+    <loc>https://ais-pre-s2ziktnotkoxwc3xdigpxk-646610739631.asia-southeast1.run.app/specifications</loc>
+    <lastmod>2026-10-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- TRICOFF Full-Screen Stand-Alone Kiosk Mode -->
+  <url>
+    <loc>https://ais-pre-s2ziktnotkoxwc3xdigpxk-646610739631.asia-southeast1.run.app/kiosk</loc>
+    <lastmod>2026-10-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+</urlset>

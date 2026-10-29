@@ -1,0 +1,8 @@
+{
+  "name": "TRICOFF — Self-Service Coffee Kiosk",
+  "description": "Self-service automated coffee kiosk machine offering Regular (₱45), Sweetened (₱50), and Decaf (₱55) brews with instant QRPh payment activation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

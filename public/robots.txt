@@ -1,0 +1,41 @@
+# ==============================================================================
+# Robots.txt for TRICOFF — Self-Service Coffee Kiosk (Philippines)
+# Website: https://ais-pre-s2ziktnotkoxwc3xdigpxk-646610739631.asia-southeast1.run.app
+# Products: Regular Roast (₱45), Sweetened Blend (₱50), Swiss Water Decaf (₱55)
+# Payment Rails: QRPh & InstaPay Cashless Solenoid Interlock
+# ==============================================================================
+
+User-agent: *
+Allow: /
+Allow: /menu
+Allow: /payment-methods
+Allow: /queue
+Allow: /specifications
+Allow: /kiosk
+Allow: /src/assets/images/
+Disallow: /api/
+Disallow: /ws
+
+# Googlebot specific rules
+User-agent: Googlebot
+Allow: /
+Allow: /menu
+Allow: /payment-methods
+Allow: /queue
+Allow: /specifications
+Allow: /kiosk
+Allow: /src/assets/images/
+Disallow: /api/
+
+# Bingbot specific rules
+User-agent: Bingbot
+Allow: /
+Allow: /menu
+Allow: /payment-methods
+Allow: /queue
+Allow: /specifications
+Allow: /kiosk
+Disallow: /api/
+
+# XML Sitemap for TRICOFF Kiosk
+Sitemap: https://ais-pre-s2ziktnotkoxwc3xdigpxk-646610739631.asia-southeast1.run.app/sitemap.xml
