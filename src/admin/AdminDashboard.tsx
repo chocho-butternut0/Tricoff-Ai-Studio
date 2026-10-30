@@ -358,7 +358,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <img
                         src={drink.image}
                         alt={drink.name}
-                        className="w-10 h-10 rounded-xl object-contain bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700"
+                        className="w-10 h-10 rounded-xl object-cover bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700"
                       />
                     </div>
 

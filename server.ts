@@ -551,14 +551,10 @@ function buildPaymentPage(order: Order): string {
   .ref-media-frame {
     position: relative;
     border-radius: 24px;
-    background: linear-gradient(180deg, #F7F2EB 0%, #ECE2D6 100%);
+    background: #EDE5D8;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: 1rem;
-    aspect-ratio: 4/3.2;
+    width: 100%;
+    aspect-ratio: 1 / 1;
   }
   .ref-price-badge {
     position: absolute;
@@ -573,7 +569,7 @@ function buildPaymentPage(order: Order): string {
     font-size: 1.25rem;
     color: var(--coffee-dark);
     box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-    z-index: 2;
+    z-index: 3;
   }
   .ref-slot-badge {
     position: absolute;
@@ -587,26 +583,28 @@ function buildPaymentPage(order: Order): string {
     padding: 0.2rem 0.6rem;
     border-radius: 999px;
     border: 1px solid var(--border-color);
-    z-index: 2;
+    z-index: 3;
   }
   .ref-cup-img {
-    height: 135px;
-    width: auto;
-    object-fit: contain;
-    filter: drop-shadow(0 10px 18px rgba(68, 39, 19, 0.2));
-    margin: auto 0;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     z-index: 1;
   }
   .ref-ribbon {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
     width: 100%;
-    background: rgba(177, 138, 97, 0.28);
-    backdrop-filter: blur(4px);
-    color: var(--coffee-dark);
+    background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.25) 70%, transparent 100%);
+    color: #FFFFFF;
     font-size: 0.72rem;
     font-weight: 600;
-    padding: 0.45rem 0.6rem;
+    padding: 1.2rem 0.6rem 0.55rem;
     text-align: center;
-    border-top: 1px solid rgba(177, 138, 97, 0.25);
     z-index: 2;
   }
   .ref-content {
@@ -884,7 +882,7 @@ function buildPaymentPage(order: Order): string {
     {/* Product Reference Card */}
     <article class="product-ref-card">
       <div class="ref-media-frame">
-        <div class="ref-price-badge">${order.price}₱</div>
+        <div class="ref-price-badge">₱${order.price}.00</div>
         <div class="ref-slot-badge">Slot ${order.slot}</div>
         <img src="${drink.image}" alt="${order.drinkName}" class="ref-cup-img">
         <div class="ref-ribbon">${drink.badgeNote || 'Benguet Harvest · 88°C Hot'}</div>
@@ -1106,6 +1104,7 @@ function buildNotFoundPage(): string {
 
 async function startServer() {
   const app = express();
+  app.set('trust proxy', 1);
   app.use(express.json());
 
   const server = http.createServer(app);
