@@ -13,7 +13,7 @@
  *   WS     /api/ws                                  → real-time push
  *
  * ESP32:
- *   POST   http://192.168.4.1/pour  { order, line, presses }
+ *   POST   http://192.168.4.1/pour  { order, line, seconds }
  *   GET    http://192.168.4.1/status
  */
 
@@ -40,7 +40,7 @@ function getArg(flag: string): string | undefined {
 const LAPTOP_IP      = process.env.LAPTOP_IP      || '192.168.4.200';
 const ESP32_IP       = process.env.ESP32_IP        || '192.168.4.1';
 const PORT           = parseInt(getArg('--port') || process.env.PORT || '3000', 10);
-const PRESS_PER_CUP  = parseInt(process.env.PRESS_PER_CUP || '8', 10);
+const POUR_SECONDS    = parseInt(process.env.POUR_SECONDS || '6', 10);
 const ESP32_MOCK     = process.env.ESP32_MOCK ? process.env.ESP32_MOCK === 'true' : true;
 const STATUS_POLL_MS = 3000;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'tricoff2025';
@@ -173,7 +173,7 @@ export interface DrinkSpec {
   shortLabel: string;
   slot: number;
   line: number;
-  presses: number;
+  pourSeconds: number;
   price: number;
   description: string;
   image: string;
@@ -184,25 +184,25 @@ export interface DrinkSpec {
 const DRINKS: Record<DrinkId, DrinkSpec> = {
   regular: {
     id: 'regular', name: 'Regular Roast', shortLabel: 'Regular',
-    slot: 1, line: 1, presses: PRESS_PER_CUP, price: 45,
+    slot: 1, line: 1, pourSeconds: POUR_SECONDS, price: 45,
     description: 'Pure unsweetened highland Benguet Arabica extracted at 9 bars',
-    image: '/src/assets/images/tricoff_regular_cup_1793250304524.jpg',
+    image: '/assets/images/regular-coffee.png',
     badgeNote: 'Benguet Harvest · 88°C Hot',
     tags: ['Benguet Arabica', 'Zero Sugar', '9-Bar Extract', '240 ml'],
   },
   sweetened: {
     id: 'sweetened', name: 'Sweetened Blend', shortLabel: 'Sweetened',
-    slot: 2, line: 2, presses: PRESS_PER_CUP, price: 50,
+    slot: 2, line: 2, pourSeconds: POUR_SECONDS, price: 50,
     description: 'Balanced roast blended with warm Negros Occidental muscovado cane',
-    image: '/src/assets/images/tricoff_sweetened_cup_1793250304427.jpg',
+    image: '/assets/images/sweetened-coffee.png',
     badgeNote: 'Raw Muscovado Infusion · 87°C',
     tags: ['Double Shot', 'Raw Muscovado', 'Caramel Crema', '240 ml'],
   },
   decaf: {
     id: 'decaf', name: 'Swiss Water Decaf', shortLabel: 'Decaf',
-    slot: 3, line: 3, presses: PRESS_PER_CUP, price: 55,
+    slot: 3, line: 3, pourSeconds: POUR_SECONDS, price: 55,
     description: '99.9% caffeine-free single-origin Swiss Water osmosis roast',
-    image: '/src/assets/images/tricoff_decaf_cup_1793250304874.jpg',
+    image: '/assets/images/decaf-coffee.png',
     badgeNote: 'Pure Osmosis Decaf · 88°C Hot',
     tags: ['Swiss Water', '99.9% Decaf', 'Low Acid', '240 ml'],
   },
@@ -219,7 +219,7 @@ export interface Order {
   drinkName: string;
   slot: number;
   line: number;
-  presses: number;
+  pourSeconds: number;
   price: number;
   status: OrderStatus;
   createdAt: string;
@@ -264,8 +264,8 @@ let machineOnline = false;
 // esp32Busy: prevents sending a second pour while one is already in flight
 let esp32Busy = false;
 
-// Per-slot presses (admin-adjustable)
-const slotPresses: Record<number, number> = { 1: PRESS_PER_CUP, 2: PRESS_PER_CUP, 3: PRESS_PER_CUP };
+// Per-slot pour duration in seconds (admin-adjustable)
+const slotSeconds: Record<number, number> = { 1: POUR_SECONDS, 2: POUR_SECONDS, 3: POUR_SECONDS };
 
 // ─── WebSocket ──────────────────────────────────────────────────────
 let wss: WebSocketServer | null = null;
@@ -281,8 +281,8 @@ function getSnapshot() {
     allOrders: allOrdersStore,   // full list for admin
     drinks: DRINKS,
     volumeMl: VOLUME_ML,
-    pressPerCup: PRESS_PER_CUP,
-    slotPresses,
+    pourSeconds: POUR_SECONDS,
+    slotSeconds,
   };
 }
 
@@ -302,9 +302,9 @@ function broadcast(type: string, payload: unknown = {}) {
 
 async function sendPourCommand(order: Order): Promise<boolean> {
   if (ESP32_MOCK) {
-    console.log(`[MOCK ESP32] Pouring ${order.id}: line ${order.line}, ${order.presses} presses`);
+    console.log(`[MOCK ESP32] Pouring ${order.id}: line ${order.line}, ${order.pourSeconds}s`);
     esp32Busy = true;
-    const pourMs = 1000 + order.presses * 1000;
+    const pourMs = order.pourSeconds * 1000;
     setTimeout(async () => {
       esp32Busy = false;
       await markOrderDone(order.id);
@@ -318,7 +318,7 @@ async function sendPourCommand(order: Order): Promise<boolean> {
     const res = await fetch(`http://${ESP32_IP}/pour`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ order: order.id, line: order.line, presses: order.presses }),
+      body: JSON.stringify({ order: order.id, line: order.line, seconds: order.pourSeconds }),
       signal: controller.signal,
     });
     clearTimeout(timeout);
@@ -362,7 +362,7 @@ function createOrder(drinkId: DrinkId, reqHost?: string): Order | null {
     drinkName: spec.name,
     slot: spec.slot,
     line: spec.line,
-    presses: slotPresses[spec.slot] ?? spec.presses,
+    pourSeconds: slotSeconds[spec.slot] ?? spec.pourSeconds,
     price: spec.price,
     status: 'created',
     createdAt: new Date().toISOString(),
@@ -443,16 +443,16 @@ function buildPaymentPage(order: Order): string {
     shortLabel: 'Coffee',
     slot: order.slot,
     line: order.line,
-    presses: order.presses,
+    pourSeconds: order.pourSeconds,
     price: order.price,
     description: 'Freshly extracted highland craft coffee.',
-    image: '/src/assets/images/tricoff_regular_cup_1793250304524.jpg',
+    image: '/assets/images/regular-coffee.png',
     badgeNote: 'Benguet Harvest · 88°C Hot',
     tags: ['Highland Arabica', '240 ml Cup', 'Hot Extraction'],
   };
 
   const tagsHtml = (drink.tags || ['Highland Harvest', '240 ml Cup'])
-    .map((tag) => `<span class="pill-chip">${tag}</span>`)
+    .map((tag) => `<span class="pill">${tag}</span>`)
     .join('');
 
   return `<!DOCTYPE html>
@@ -460,576 +460,556 @@ function buildPaymentPage(order: Order): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TRICOFF — Mobile QR Payment</title>
+<title>TRICOFF — Confirm Order</title>
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
   :root {
-    --background: #FFFFFF;
-    --coffee-dark: #442713;
-    --coffee-caramel: #A5754A;
-    --coffee-medium: #B18A61;
-    --coffee-brown: #644B37;
-    --border-color: #E8DEC8;
-    --bg-page: #FAF7F2;
-    --success: #059669;
-    --danger: #DC2626;
+    --dk:   #2C1A0E;
+    --md:   #5C3D1E;
+    --lt:   #A07850;
+    --cream:#FAF6F0;
+    --card: #FFFFFF;
+    --border: #E8DCC8;
+    --green: #1A7F5A;
+    --green-bg: #EDFAF4;
+    --red:   #C0392B;
+    --red-bg:#FEF2F2;
   }
+
+  html, body {
+    height: 100%;
+  }
+
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--bg-page);
-    color: var(--coffee-dark);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--cream);
+    color: var(--dk);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start;
-    padding: 1rem 0.85rem;
+    padding: 1.25rem 1rem 3rem;
     -webkit-font-smoothing: antialiased;
   }
-  .app-container {
+
+  .page {
     width: 100%;
-    max-width: 410px;
-    margin: 0 auto;
+    max-width: 420px;
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    padding-bottom: 2.5rem;
   }
-  /* Top App Bar */
-  .top-bar {
+
+  /* ── Header ── */
+  .header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0.5rem 0.25rem;
+    padding: 0.25rem 0;
   }
-  .brand-lockup {
+  .secure-badge {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-  }
-  .brand-title {
-    font-size: 1.25rem;
-    font-weight: 900;
-    letter-spacing: -0.02em;
-    color: var(--coffee-dark);
-  }
-  .brand-tag {
-    font-size: 0.65rem;
+    gap: 0.3rem;
+    font-size: 0.68rem;
     font-weight: 700;
-    padding: 0.2rem 0.5rem;
-    background: #F6F1EA;
-    color: var(--coffee-brown);
-    border: 1px solid var(--border-color);
-    border-radius: 999px;
-    letter-spacing: 0.05em;
-  }
-  .security-pill {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--coffee-dark);
-    background: #F6F1EA;
-    border: 1px solid var(--border-color);
-    padding: 0.25rem 0.65rem;
+    letter-spacing: 0.04em;
+    color: var(--md);
+    background: #F0E8DC;
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.7rem;
     border-radius: 999px;
   }
 
-  /* ── Reference Card Design adapted for Mobile Phone ── */
-  .product-ref-card {
-    background: #FFFFFF;
-    border: 1px solid var(--border-color);
-    border-radius: 32px;
-    padding: 0.75rem;
-    box-shadow: 0 10px 30px rgba(68, 39, 19, 0.06);
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+  /* ── Hero Card ── */
+  .hero-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 28px;
     overflow: hidden;
+    box-shadow: 0 8px 32px rgba(44,26,14,0.08);
   }
-  .ref-media-frame {
+
+  .hero-img-wrap {
     position: relative;
-    border-radius: 24px;
-    background: #EDE5D8;
-    overflow: hidden;
     width: 100%;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 4 / 3;
+    background: #EDE0CC;
+    overflow: hidden;
   }
-  .ref-price-badge {
-    position: absolute;
-    top: 0;
-    right: 0;
-    background: #FFFFFF;
-    padding: 0.35rem 0.9rem;
-    border-radius: 0 24px 0 16px;
-    border-left: 1px solid rgba(232, 222, 200, 0.8);
-    border-bottom: 1px solid rgba(232, 222, 200, 0.8);
-    font-weight: 900;
-    font-size: 1.25rem;
-    color: var(--coffee-dark);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-    z-index: 3;
-  }
-  .ref-slot-badge {
-    position: absolute;
-    top: 0.65rem;
-    left: 0.65rem;
-    background: rgba(255, 255, 255, 0.92);
-    font-family: ui-monospace, monospace;
-    font-size: 0.7rem;
-    font-weight: 800;
-    color: var(--coffee-dark);
-    padding: 0.2rem 0.6rem;
-    border-radius: 999px;
-    border: 1px solid var(--border-color);
-    z-index: 3;
-  }
-  .ref-cup-img {
-    position: absolute;
-    inset: 0;
+  .hero-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    z-index: 1;
+    display: block;
   }
-  .ref-ribbon {
+  .hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(44,26,14,0.72) 0%, rgba(44,26,14,0.1) 55%, transparent 100%);
+  }
+  .hero-bottom {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    width: 100%;
-    background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.25) 70%, transparent 100%);
-    color: #FFFFFF;
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 1.2rem 0.6rem 0.55rem;
-    text-align: center;
-    z-index: 2;
+    padding: 1.25rem 1.25rem 1rem;
+    color: #fff;
   }
-  .ref-content {
-    padding: 0.25rem 0.4rem 0.2rem;
+  .hero-name {
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 0.3rem;
+  }
+  .hero-subtitle {
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.82;
+  }
+  .hero-price-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255,255,255,0.96);
+    color: var(--dk);
+    font-size: 1.3rem;
+    font-weight: 900;
+    padding: 0.35rem 0.9rem;
+    border-radius: 14px;
+    border: 1px solid rgba(232,220,200,0.6);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  }
+  .hero-slot-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: rgba(255,255,255,0.96);
+    color: var(--dk);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid rgba(232,220,200,0.6);
+  }
+
+  .hero-body {
+    padding: 1rem 1.25rem 1.25rem;
     display: flex;
     flex-direction: column;
-    gap: 0.4rem;
+    gap: 0.75rem;
   }
-  .ref-title-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  .hero-desc {
+    font-size: 0.8rem;
+    color: var(--md);
+    line-height: 1.55;
   }
-  .ref-title {
-    font-size: 1.35rem;
-    font-weight: 800;
-    color: var(--coffee-dark);
-    letter-spacing: -0.01em;
-  }
-  .ref-order-tag {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: var(--coffee-caramel);
-    display: flex;
-    align-items: center;
-    gap: 0.2rem;
-  }
-  .ref-desc {
-    font-size: 0.75rem;
-    color: var(--coffee-brown);
-    line-height: 1.4;
-  }
-  .pills-row {
+  .pills {
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem;
-    padding-top: 0.4rem;
-    border-top: 1px solid rgba(232, 222, 200, 0.7);
   }
-  .pill-chip {
-    font-size: 0.7rem;
+  .pill {
+    font-size: 0.68rem;
     font-weight: 600;
-    color: var(--coffee-brown);
-    background: #F6F1EA;
-    border: 1px solid var(--border-color);
-    padding: 0.25rem 0.6rem;
+    color: var(--md);
+    background: #F5EDE0;
+    border: 1px solid var(--border);
+    padding: 0.25rem 0.65rem;
     border-radius: 999px;
   }
 
-  /* Kiosk Slot Notice */
-  .slot-banner {
-    background: #FAF7F2;
-    border: 1px solid var(--border-color);
-    border-radius: 1.25rem;
-    padding: 0.85rem 1rem;
+  /* ── Order Summary Strip ── */
+  .summary-strip {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+  }
+  .summary-label {
+    color: var(--lt);
+    font-weight: 500;
+  }
+  .summary-value {
+    font-weight: 700;
+    color: var(--dk);
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 0.78rem;
+  }
+  .summary-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0.1rem 0;
+  }
+  .summary-total-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--dk);
+  }
+  .summary-total-value {
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: var(--dk);
+  }
+
+  /* ── Slot Instruction ── */
+  .slot-instruction {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 0.85rem;
+    background: #F5EDE0;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 0.9rem 1rem;
   }
-  .slot-banner-num {
-    background: var(--coffee-dark);
-    color: #FFFFFF;
-    width: 2.2rem;
-    height: 2.2rem;
-    border-radius: 0.75rem;
+  .slot-num {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 12px;
+    background: var(--dk);
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 900;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 800;
-    font-size: 1.15rem;
     flex-shrink: 0;
   }
-  .slot-banner-text {
-    font-size: 0.75rem;
-    color: var(--coffee-brown);
-    line-height: 1.4;
+  .slot-text {
+    font-size: 0.78rem;
+    color: var(--md);
+    line-height: 1.5;
   }
-  .slot-banner-text strong {
-    color: var(--coffee-dark);
+  .slot-text strong {
+    color: var(--dk);
     font-weight: 800;
   }
 
-  /* Payment Source Simulator Selector */
-  .app-picker-label {
-    font-size: 0.75rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--coffee-brown);
-    margin-bottom: 0.5rem;
-  }
-  .app-options {
+  /* ── Buttons ── */
+  .actions {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-  }
-  .app-option {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.85rem 1rem;
-    border-radius: 1rem;
-    border: 1.5px solid var(--border-color);
-    background: #FFFFFF;
-    cursor: pointer;
-    transition: all 0.15s ease;
-  }
-  .app-option.selected {
-    border-color: var(--coffee-caramel);
-    background: #F6F1EA;
-    box-shadow: 0 4px 12px rgba(165, 117, 74, 0.12);
-  }
-  .app-left {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--coffee-dark);
-  }
-  .app-badge-dot {
-    width: 0.65rem;
-    height: 0.65rem;
-    border-radius: 50%;
-    background: var(--coffee-caramel);
-  }
-  .app-balance {
-    font-size: 0.75rem;
-    color: var(--coffee-brown);
-    font-family: ui-monospace, monospace;
-    font-weight: 600;
-  }
-
-  /* Action Buttons */
-  .action-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.65rem;
-    margin-top: 0.25rem;
+    gap: 0.6rem;
   }
   .btn {
     width: 100%;
-    padding: 1.05rem;
-    border-radius: 1.15rem;
-    font-size: 1rem;
+    padding: 1rem;
+    border-radius: 16px;
+    font-size: 0.95rem;
     font-weight: 800;
     cursor: pointer;
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    transition: all 0.15s ease;
-    border: none;
+    transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: 0.01em;
   }
-  .btn:active {
-    transform: scale(0.98);
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .btn-confirm {
+    background: var(--dk);
+    color: #fff;
+    box-shadow: 0 6px 20px rgba(44,26,14,0.22);
+    font-size: 1rem;
+    padding: 1.1rem;
+    border-radius: 18px;
   }
-  .btn-pay {
-    background: var(--coffee-dark);
-    color: #FFFFFF;
-    box-shadow: 0 6px 18px rgba(68, 39, 19, 0.25);
-  }
-  .btn-pay:hover {
-    background: var(--coffee-brown);
-  }
+  .btn-confirm:not(:disabled):hover { opacity: 0.88; }
+
   .btn-cancel {
     background: transparent;
-    color: var(--coffee-brown);
+    color: var(--lt);
     font-size: 0.85rem;
     font-weight: 600;
-    padding: 0.65rem;
+    padding: 0.7rem;
   }
-  .btn-cancel:hover {
-    color: var(--danger);
-  }
+  .btn-cancel:hover { color: var(--red); }
 
-  /* Result Screens */
-  .result-view {
-    display: none;
-    padding: 2.5rem 1.5rem;
-    text-align: center;
-    background: #FFFFFF;
-    border: 1px solid var(--border-color);
-    border-radius: 32px;
-    box-shadow: 0 10px 30px rgba(68, 39, 19, 0.06);
+  /* ── Spinner ── */
+  .spinner {
+    width: 1.1rem;
+    height: 1.1rem;
+    border: 2.5px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
   }
-  .result-view.active {
-    display: flex;
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Result screens ── */
+  .result-screen {
+    display: none;
     flex-direction: column;
     align-items: center;
+    text-align: center;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    padding: 2.5rem 1.5rem 2rem;
+    box-shadow: 0 8px 32px rgba(44,26,14,0.08);
+    gap: 0;
   }
-  .result-icon-circle {
-    width: 4.5rem;
-    height: 4.5rem;
+  .result-screen.show { display: flex; }
+
+  .result-icon {
+    width: 5rem;
+    height: 5rem;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 1.25rem;
   }
-  .result-icon-circle.success {
-    background: #ECFDF5;
-    border: 2px solid #A7F3D0;
-    color: #059669;
-  }
-  .result-icon-circle.fail {
-    background: #FEF2F2;
-    border: 2px solid #FECACA;
-    color: #DC2626;
-  }
+  .result-icon.ok  { background: var(--green-bg); color: var(--green); border: 2px solid #A7F3D0; }
+  .result-icon.err { background: var(--red-bg);   color: var(--red);   border: 2px solid #FECACA; }
+
   .result-title {
     font-size: 1.5rem;
     font-weight: 900;
-    margin-bottom: 0.5rem;
     letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
   }
-  .result-msg {
-    font-size: 0.85rem;
-    color: var(--coffee-brown);
-    line-height: 1.5;
+  .result-sub {
+    font-size: 0.82rem;
+    color: var(--md);
+    line-height: 1.55;
     margin-bottom: 1.5rem;
-    max-width: 300px;
+    max-width: 280px;
   }
-  .status-pill {
-    background: #FAF7F2;
-    border: 1px solid var(--border-color);
-    border-radius: 1.25rem;
-    padding: 1rem;
+  .receipt {
     width: 100%;
+    background: var(--cream);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 0.9rem 1rem;
     text-align: left;
-    font-size: 0.8rem;
-    margin-bottom: 1.5rem;
+    font-size: 0.78rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    margin-bottom: 1.25rem;
   }
-  .status-row {
+  .receipt-row {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 0.4rem;
   }
-  .status-row:last-child {
-    margin-bottom: 0;
+  .receipt-key   { color: var(--lt); }
+  .receipt-val   { font-weight: 700; color: var(--dk); font-family: ui-monospace, monospace; }
+  .receipt-val.hi { color: var(--lt); }
+
+  .pour-anim {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .pour-dots {
+    display: flex;
+    gap: 0.4rem;
+  }
+  .pour-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--lt);
+    animation: bounce 1s ease-in-out infinite;
+  }
+  .pour-dot:nth-child(2) { animation-delay: 0.15s; }
+  .pour-dot:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bounce {
+    0%,80%,100% { transform: scale(0.7); opacity: 0.4; }
+    40%         { transform: scale(1.2); opacity: 1; }
+  }
+  .pour-label {
+    font-size: 0.75rem;
+    color: var(--lt);
+    font-weight: 600;
+    letter-spacing: 0.03em;
   }
 
-  /* Spinner */
-  .spinner {
-    width: 1.25rem;
-    height: 1.25rem;
-    border: 2.5px solid rgba(255, 255, 255, 0.3);
-    border-top-color: #FFFFFF;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin {
-    to { transform: rotate(360deg); }
+  /* ── Footer ── */
+  .footer-note {
+    font-size: 0.68rem;
+    color: var(--lt);
+    text-align: center;
+    padding-top: 0.25rem;
+    opacity: 0.8;
   }
 </style>
 </head>
 <body>
-<div class="app-container">
-  
-  {/* Top App Bar */}
-  <header class="top-bar">
-    <div class="brand-lockup">
-      <span class="brand-title">TRICOFF</span>
-      <span class="brand-tag">REV. 2 EXPRESS</span>
-    </div>
-    <div class="security-pill">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      <span>QRPh & InstaPay</span>
+<div class="page">
+
+  <!-- Header -->
+  <header class="header">
+    <img src="/assets/images/tricoff_logo.svg" alt="TRICOFF" style="height:2rem;">
+    <div class="secure-badge">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      QRPh · InstaPay
     </div>
   </header>
 
-  {/* Active Order Stage */}
-  <main id="orderBody" style="display:flex; flex-direction:column; gap:1rem;">
-    
-    {/* Product Reference Card */}
-    <article class="product-ref-card">
-      <div class="ref-media-frame">
-        <div class="ref-price-badge">₱${order.price}.00</div>
-        <div class="ref-slot-badge">Slot ${order.slot}</div>
-        <img src="${drink.image}" alt="${order.drinkName}" class="ref-cup-img">
-        <div class="ref-ribbon">${drink.badgeNote || 'Benguet Harvest · 88°C Hot'}</div>
-      </div>
+  <!-- Order form -->
+  <div id="orderView" style="display:flex;flex-direction:column;gap:1rem;">
 
-      <div class="ref-content">
-        <div class="ref-title-row">
-          <h2 class="ref-title">${order.drinkName}</h2>
-          <span class="ref-order-tag">Order Ready ↗</span>
-        </div>
-        <p class="ref-desc">${drink.description}</p>
-        
-        <div class="pills-row">
-          ${tagsHtml}
+    <!-- Hero card -->
+    <div class="hero-card">
+      <div class="hero-img-wrap">
+        <img src="${drink.image}" alt="${order.drinkName}" class="hero-img">
+        <div class="hero-overlay"></div>
+        <div class="hero-price-badge">₱${order.price}.00</div>
+        <div class="hero-slot-badge">SLOT ${order.slot}</div>
+        <div class="hero-bottom">
+          <div class="hero-name">${order.drinkName}</div>
+          <div class="hero-subtitle">${drink.badgeNote || ''}</div>
         </div>
       </div>
-    </article>
-
-    {/* Kiosk Slot Notice */}
-    <div class="slot-banner">
-      <div class="slot-banner-num">${order.slot}</div>
-      <div class="slot-banner-text">
-        Place your 240 ml takeaway paper cup under <strong>Slot ${order.slot}</strong> on the kiosk. Dispenser activates upon payment.
+      <div class="hero-body">
+        <p class="hero-desc">${drink.description}</p>
+        <div class="pills">${tagsHtml}</div>
       </div>
     </div>
 
-    {/* Simulated Payment Account Picker */}
-    <div>
-      <div class="app-picker-label">Pay from (Simulated Account)</div>
-      <div class="app-options">
-        <div class="app-option selected" onclick="selectApp(this, 'GCash')">
-          <div class="app-left">
-            <span class="app-badge-dot"></span>
-            <span>GCash (0995 028 ••••)</span>
-          </div>
-          <span class="app-balance">₱1,250.00</span>
-        </div>
-        <div class="app-option" onclick="selectApp(this, 'Maya')">
-          <div class="app-left">
-            <span class="app-badge-dot" style="background:var(--coffee-medium)"></span>
-            <span>Maya Wallet</span>
-          </div>
-          <span class="app-balance">₱3,400.00</span>
-        </div>
-        <div class="app-option" onclick="selectApp(this, 'BPI')">
-          <div class="app-left">
-            <span class="app-badge-dot" style="background:var(--coffee-brown)"></span>
-            <span>BPI Vybe / Online</span>
-          </div>
-          <span class="app-balance">₱8,120.00</span>
-        </div>
+    <!-- Order summary -->
+    <div class="summary-strip">
+      <div class="summary-row">
+        <span class="summary-label">Order ID</span>
+        <span class="summary-value">${order.id}</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Item</span>
+        <span class="summary-value">${order.drinkName}</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-label">Volume</span>
+        <span class="summary-value">240 ml</span>
+      </div>
+      <div class="summary-divider"></div>
+      <div class="summary-row">
+        <span class="summary-total-label">Total</span>
+        <span class="summary-total-value">₱${order.price}.00</span>
       </div>
     </div>
 
-    {/* Action Buttons */}
-    <div class="action-group">
-      <button class="btn btn-pay" id="payBtn" onclick="executePayment()">
-        <span>Authorize & Pay ₱${order.price}.00</span>
+    <!-- Slot instruction -->
+    <div class="slot-instruction">
+      <div class="slot-num">${order.slot}</div>
+      <div class="slot-text">
+        Place your cup under <strong>Slot ${order.slot}</strong> on the kiosk before confirming. The dispenser activates immediately after payment.
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="actions">
+      <button class="btn btn-confirm" id="payBtn" onclick="confirmPayment()">
+        Confirm &amp; Pay ₱${order.price}.00
       </button>
-      <button class="btn btn-cancel" onclick="executeCancel()">
-        <span>Decline & Cancel Order</span>
+      <button class="btn btn-cancel" onclick="cancelOrder()">
+        Cancel order
       </button>
     </div>
-  </main>
 
-  {/* Success View */}
-  <div class="result-view" id="successView">
-    <div class="result-icon-circle success">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+  </div>
+
+  <!-- Success screen -->
+  <div class="result-screen" id="successView">
+    <div class="result-icon ok">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
     </div>
-    <h2 class="result-title" style="color:var(--coffee-dark)">Payment Approved</h2>
-    <p class="result-msg">
-      ₱${order.price}.00 authorized via <strong id="selectedAppName">GCash</strong>.<br>
-      Your <strong>${order.drinkName}</strong> is pouring at the kiosk now!
-    </p>
+    <div class="result-title">Order Confirmed</div>
+    <p class="result-sub">Your payment went through. Coffee is on its way — stand by at the kiosk.</p>
 
-    <div class="status-pill">
-      <div class="status-row">
-        <span style="color:var(--coffee-brown)">Order Reference</span>
-        <span style="font-family:ui-monospace, monospace; font-weight:700">${order.id}</span>
+    <div class="pour-anim">
+      <div class="pour-dots">
+        <div class="pour-dot"></div>
+        <div class="pour-dot"></div>
+        <div class="pour-dot"></div>
       </div>
-      <div class="status-row">
-        <span style="color:var(--coffee-brown)">Dispenser Location</span>
-        <span style="color:var(--coffee-caramel); font-weight:800">Slot ${order.slot} (Line ${order.line})</span>
-      </div>
-      <div class="status-row">
-        <span style="color:var(--coffee-brown)">Status</span>
-        <span style="color:#059669; font-weight:800">Dispensing in Progress</span>
-      </div>
+      <div class="pour-label">Dispensing now…</div>
     </div>
 
-    <p style="font-size:0.75rem; color:var(--coffee-brown); line-height:1.4">
-      Please wait at the kiosk machine. Your cup will be filled to ~240 ml.
+    <div class="receipt">
+      <div class="receipt-row">
+        <span class="receipt-key">Order</span>
+        <span class="receipt-val">${order.id}</span>
+      </div>
+      <div class="receipt-row">
+        <span class="receipt-key">Item</span>
+        <span class="receipt-val">${order.drinkName}</span>
+      </div>
+      <div class="receipt-row">
+        <span class="receipt-key">Slot</span>
+        <span class="receipt-val hi">Slot ${order.slot}</span>
+      </div>
+      <div class="receipt-row">
+        <span class="receipt-key">Amount</span>
+        <span class="receipt-val">₱${order.price}.00</span>
+      </div>
+    </div>
+
+    <p style="font-size:0.75rem;color:var(--lt);line-height:1.5;">
+      Cup fills to ~240 ml. Please wait at the machine.
     </p>
   </div>
 
-  {/* Cancelled View */}
-  <div class="result-view" id="cancelView">
-    <div class="result-icon-circle fail">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  <!-- Cancelled screen -->
+  <div class="result-screen" id="cancelView">
+    <div class="result-icon err">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </div>
-    <h2 class="result-title" style="color:var(--danger)">Order Cancelled</h2>
-    <p class="result-msg">
-      The transaction for ${order.id} has been safely cancelled. No charges were made to your account.
+    <div class="result-title" style="color:var(--red)">Order Cancelled</div>
+    <p class="result-sub">
+      Order ${order.id} has been cancelled. No charge was made.
     </p>
-    <p style="font-size:0.75rem; color:var(--coffee-brown)">
-      You can initiate a new order at the TRICOFF kiosk terminal.
-    </p>
+    <p style="font-size:0.75rem;color:var(--lt);">Start a new order at the TRICOFF kiosk.</p>
   </div>
+
+  <p class="footer-note">Powered by TRICOFF · QRPh &amp; InstaPay ready</p>
+
 </div>
 
 <script>
 var orderId = ${JSON.stringify(order.id)};
-var selectedSource = 'GCash';
 
-function selectApp(el, name) {
-  document.querySelectorAll('.app-option').forEach(function(o) { o.classList.remove('selected'); });
-  el.classList.add('selected');
-  selectedSource = name;
-}
-
-function executePayment() {
+function confirmPayment() {
   var btn = document.getElementById('payBtn');
   btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div><span>Authorizing payment...</span>';
+  btn.innerHTML = '<div class="spinner"></div><span>Processing…</span>';
 
   fetch('/api/orders/' + orderId + '/pay', { method: 'POST' })
     .then(function(r) { return r.json(); })
-    .then(function(data) {
-      document.getElementById('orderBody').style.display = 'none';
-      document.getElementById('selectedAppName').innerText = selectedSource;
-      document.getElementById('successView').classList.add('active');
-    })
-    .catch(function() {
-      // Fallback display in case network glitch
-      document.getElementById('orderBody').style.display = 'none';
-      document.getElementById('selectedAppName').innerText = selectedSource;
-      document.getElementById('successView').classList.add('active');
+    .then(function() { showSuccess(); })
+    .catch(function() { showSuccess(); }); // still show success — server-side is authoritative
+}
+
+function cancelOrder() {
+  fetch('/api/orders/' + orderId + '/fail', { method: 'POST' })
+    .finally(function() {
+      document.getElementById('orderView').style.display = 'none';
+      document.getElementById('cancelView').classList.add('show');
     });
 }
 
-function executeCancel() {
-  fetch('/api/orders/' + orderId + '/fail', { method: 'POST' })
-    .finally(function() {
-      document.getElementById('orderBody').style.display = 'none';
-      document.getElementById('cancelView').classList.add('active');
-    });
+function showSuccess() {
+  document.getElementById('orderView').style.display = 'none';
+  document.getElementById('successView').classList.add('show');
 }
 </script>
 </body>
@@ -1272,20 +1252,20 @@ async function startServer() {
     });
   });
 
-  // 13. Update presses per slot
-  app.patch('/api/admin/slots/:slot/presses', requireAdmin, (req, res) => {
+  // 13. Update pour duration per slot (seconds)
+  app.patch('/api/admin/slots/:slot/seconds', requireAdmin, (req, res) => {
     const slot = parseInt(req.params.slot, 10);
-    const { presses } = req.body as { presses?: number };
-    if (![1, 2, 3].includes(slot) || !presses || presses < 1 || presses > 30) {
-      res.status(400).json({ ok: false, error: 'Slot must be 1-3, presses 1-30.' });
+    const { seconds } = req.body as { seconds?: number };
+    if (![1, 2, 3].includes(slot) || !seconds || seconds < 1 || seconds > 60) {
+      res.status(400).json({ ok: false, error: 'Slot must be 1-3, seconds 1-60.' });
       return;
     }
-    slotPresses[slot] = presses;
-    broadcast('admin:presses_updated', { slot, presses });
-    res.json({ ok: true, slot, presses, slotPresses });
+    slotSeconds[slot] = seconds;
+    broadcast('admin:seconds_updated', { slot, seconds });
+    res.json({ ok: true, slot, seconds, slotSeconds });
   });
 
-  // 14. Test press one slot
+  // 14. Test pour one slot (1 second burst)
   app.post('/api/admin/slots/:slot/test', requireAdmin, async (req, res) => {
     const slot = parseInt(req.params.slot, 10);
     if (![1, 2, 3].includes(slot)) {
@@ -1296,8 +1276,8 @@ async function startServer() {
     if (!drink) { res.status(400).json({ ok: false, error: 'No drink for that slot.' }); return; }
 
     if (ESP32_MOCK) {
-      console.log(`[MOCK ESP32] Test press: slot ${slot} (line ${drink.line})`);
-      broadcast('admin:test_press', { slot, mock: true });
+      console.log(`[MOCK ESP32] Test pour: slot ${slot} (line ${drink.line}, 1s)`);
+      broadcast('admin:test_pour', { slot, mock: true });
       res.json({ ok: true, slot, mock: true });
       return;
     }
@@ -1307,27 +1287,198 @@ async function startServer() {
       const response = await fetch(`http://${ESP32_IP}/pour`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ order: 'TEST', line: drink.line, presses: 1 }),
+        body: JSON.stringify({ order: 'TEST', line: drink.line, seconds: 1 }),
         signal: controller.signal,
       });
       clearTimeout(to);
-      broadcast('admin:test_press', { slot, ok: response.ok });
+      broadcast('admin:test_pour', { slot, ok: response.ok });
       res.json({ ok: response.ok, slot });
     } catch {
       res.status(503).json({ ok: false, error: 'ESP32 unreachable.' });
     }
   });
 
-  // 15. Export all orders as CSV (uses full allOrdersStore, not 20-item cap)
+  // 15. Export all orders as styled HTML report
   app.get('/api/admin/orders/export', requireAdmin, (_req, res) => {
+    const now = new Date();
+    const exportDate = now.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
+    const exportTime = now.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
+
+    const totalOrders = allOrdersStore.length;
+    const completedOrders = allOrdersStore.filter(o => o.status === 'done').length;
+    const totalRevenue = allOrdersStore.filter(o => o.status === 'done').reduce((sum, o) => sum + (o.price ?? 0), 0);
+    const failedOrders = allOrdersStore.filter(o => o.status === 'failed').length;
+
+    const statusColor: Record<string, string> = {
+      done:     '#2d6a4f',
+      paid:     '#1d4ed8',
+      pouring:  '#92400e',
+      created:  '#6b7280',
+      failed:   '#991b1b',
+    };
+    const statusBg: Record<string, string> = {
+      done:     '#d1fae5',
+      paid:     '#dbeafe',
+      pouring:  '#fef3c7',
+      created:  '#f3f4f6',
+      failed:   '#fee2e2',
+    };
+
+    const escape = (s: string | number | undefined) =>
+      String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    const formatDt = (iso: string | undefined) => {
+      if (!iso) return '<span style="color:#aaa">—</span>';
+      const d = new Date(iso);
+      return `${d.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })} ${d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' })}`;
+    };
+
+    const rows = allOrdersStore.map((o, i) => {
+      const st = o.status ?? 'created';
+      return `
+        <tr style="background:${i % 2 === 0 ? '#faf7f2' : '#ffffff'}">
+          <td style="padding:10px 14px;color:#888;font-size:11px;font-family:monospace">${escape(o.id).slice(0, 8)}…</td>
+          <td style="padding:10px 14px;font-weight:600;color:#442713">${escape(o.drinkName)}</td>
+          <td style="padding:10px 14px;text-align:center;color:#644B37">Slot ${escape(o.slot)}</td>
+          <td style="padding:10px 14px;text-align:right;font-weight:700;color:#442713;font-family:monospace">₱${escape(o.price)}.00</td>
+          <td style="padding:10px 14px;text-align:center">
+            <span style="background:${statusBg[st] ?? '#f3f4f6'};color:${statusColor[st] ?? '#374151'};padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;text-transform:capitalize">${escape(st)}</span>
+          </td>
+          <td style="padding:10px 14px;font-size:12px;color:#6b7280">${formatDt(o.createdAt)}</td>
+          <td style="padding:10px 14px;font-size:12px;color:#6b7280">${formatDt(o.paidAt)}</td>
+          <td style="padding:10px 14px;font-size:12px;color:#6b7280">${formatDt(o.doneAt)}</td>
+        </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TriCoff Order Report — ${exportDate}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f0e8; color: #442713; padding: 32px 24px; }
+    .page { max-width: 1100px; margin: 0 auto; }
+
+    /* Header */
+    .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-dot { width: 44px; height: 44px; background: #442713; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+    .brand-dot span { color: #faf7f2; font-weight: 800; font-size: 18px; letter-spacing: -1px; }
+    .brand-title { font-size: 22px; font-weight: 800; color: #442713; letter-spacing: -0.5px; }
+    .brand-sub { font-size: 12px; color: #a5754a; margin-top: 2px; }
+    .export-meta { text-align: right; font-size: 12px; color: #a5754a; line-height: 1.6; }
+
+    /* Summary cards */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+    .stat-card { background: #fff; border-radius: 16px; padding: 18px 20px; border: 1px solid #ede5d8; }
+    .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #a5754a; margin-bottom: 6px; }
+    .stat-value { font-size: 28px; font-weight: 800; color: #442713; letter-spacing: -1px; }
+    .stat-value.green { color: #2d6a4f; }
+    .stat-value.red { color: #991b1b; }
+
+    /* Table */
+    .table-wrap { background: #fff; border-radius: 20px; overflow: hidden; border: 1px solid #ede5d8; box-shadow: 0 4px 20px rgba(68,39,19,0.06); }
+    .table-header-bar { padding: 18px 20px; border-bottom: 1px solid #ede5d8; display: flex; align-items: center; justify-content: space-between; }
+    .table-header-bar h2 { font-size: 15px; font-weight: 700; color: #442713; }
+    .table-header-bar span { font-size: 12px; color: #a5754a; }
+    table { width: 100%; border-collapse: collapse; }
+    thead th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #a5754a; background: #faf7f2; border-bottom: 1px solid #ede5d8; }
+    thead th:nth-child(3), thead th:nth-child(4), thead th:nth-child(5) { text-align: center; }
+    thead th:nth-child(4) { text-align: right; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody td { border-bottom: 1px solid #f0ebe3; }
+
+    /* Footer */
+    .footer { text-align: center; margin-top: 24px; font-size: 11px; color: #b8a090; }
+
+    @media print {
+      body { background: white; padding: 16px; }
+      .stat-card, .table-wrap { box-shadow: none; border: 1px solid #ddd; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div class="brand">
+        <div class="brand-dot"><span>TC</span></div>
+        <div>
+          <div class="brand-title">TriCoff</div>
+          <div class="brand-sub">Order History Report</div>
+        </div>
+      </div>
+      <div class="export-meta">
+        <div><strong>Exported on</strong> ${exportDate}</div>
+        <div>at ${exportTime}</div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Total Orders</div>
+        <div class="stat-value">${totalOrders}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Completed</div>
+        <div class="stat-value green">${completedOrders}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Revenue</div>
+        <div class="stat-value">₱${totalRevenue}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Failed</div>
+        <div class="stat-value red">${failedOrders}</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header-bar">
+        <h2>All Orders</h2>
+        <span>${totalOrders} record${totalOrders !== 1 ? 's' : ''}</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Drink</th>
+            <th>Slot</th>
+            <th>Price</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Paid</th>
+            <th>Done</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="footer">Generated by TriCoff Kiosk · ${exportDate} · ${totalOrders} orders</div>
+  </div>
+</body>
+</html>`;
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="tricoff-report-${now.toISOString().slice(0,10)}.html"`);
+    res.send(html);
+  });
+
+  // 16. Export all orders as plain CSV
+  app.get('/api/admin/orders/export/csv', requireAdmin, (_req, res) => {
     const header = 'Order ID,Drink,Slot,Price,Status,Created At,Paid At,Done At\n';
     const rows = allOrdersStore
       .map((o) =>
         [o.id, o.drinkName, o.slot, o.price, o.status, o.createdAt, o.paidAt ?? '', o.doneAt ?? ''].join(',')
       )
       .join('\n');
+    const now = new Date();
     res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', 'attachment; filename="tricoff-orders.csv"');
+    res.setHeader('Content-Disposition', `attachment; filename="tricoff-orders-${now.toISOString().slice(0,10)}.csv"`);
     res.send(header + rows);
   });
 
@@ -1362,7 +1513,7 @@ async function startServer() {
     console.log(`TRICOFF kiosk server on http://0.0.0.0:${PORT}`);
     console.log(`  Laptop IP  : ${LAPTOP_IP} (QR codes point here)`);
     console.log(`  ESP32 IP   : ${ESP32_IP} ${ESP32_MOCK ? '(MOCK MODE)' : ''}`);
-    console.log(`  Pour spec  : ${PRESS_PER_CUP} presses → ~${VOLUME_ML} ml`);
+    console.log(`  Pour spec  : ${POUR_SECONDS}s open → ~${VOLUME_ML} ml`);
     console.log(`  Orders DB  : ${ORDERS_FILE}`);
     console.log(`  History    : ${allOrdersStore.length} orders loaded from disk`);
   });

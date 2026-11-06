@@ -9,7 +9,7 @@ export interface Order {
   drinkName: string;
   slot: number;
   line: number;
-  presses: number;
+  pourSeconds: number;
   price: number;
   status: OrderStatus;
   createdAt: string;
@@ -23,9 +23,9 @@ export interface KioskSnapshot {
   esp32Mock: boolean;
   activeOrder: Order | null;
   recentOrders: Order[];
-  drinks: Record<DrinkId, { id: DrinkId; name: string; shortLabel: string; slot: number; line: number; presses: number; price: number; description: string }>;
+  drinks: Record<DrinkId, { id: DrinkId; name: string; shortLabel: string; slot: number; line: number; pourSeconds: number; price: number; description: string }>;
   volumeMl: number;
-  pressPerCup: number;
+  pourSeconds: number;
 }
 
 const DEFAULT_SNAPSHOT: KioskSnapshot = {
@@ -35,7 +35,7 @@ const DEFAULT_SNAPSHOT: KioskSnapshot = {
   recentOrders: [],
   drinks: {} as KioskSnapshot['drinks'],
   volumeMl: 200,
-  pressPerCup: 8,
+  pourSeconds: 6,
 };
 
 export function useTricoffBroker() {

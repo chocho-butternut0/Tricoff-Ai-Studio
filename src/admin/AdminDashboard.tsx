@@ -101,23 +101,23 @@ function StatusBadge({ status }: { status: Order['status'] }) {
 // ── Main Dashboard Component ────────────────────────────────────────
 
 export function AdminDashboard({ onLogout }: AdminDashboardProps) {
-  const { data, wsConnected, updatePresses, testPress, exportCsv, resetKiosk } =
+  const { data, wsConnected, updateSeconds, testPress, exportCsv, exportHtml, resetKiosk } =
     useAdminBroker(true);
 
   const [testingSlot, setTestingSlot] = useState<number | null>(null);
   const [testResult, setTestResult] = useState<Record<number, 'ok' | 'err'>>({});
-  const [pressInputs, setPressInputs] = useState<Record<number, string>>({});
+  const [secInputs, setSecInputs] = useState<Record<number, string>>({});
   const [savingSlot, setSavingSlot] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'feed' | 'history'>('feed');
   const [historyFilter, setHistoryFilter] = useState<'all' | Order['status']>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { stats, allOrders, activeOrder, machineOnline, esp32Mock, slotPresses } = data;
+  const { stats, allOrders, activeOrder, machineOnline, esp32Mock, slotSeconds } = data;
 
-  const getPresses = (slot: number) =>
-    pressInputs[slot] !== undefined ? pressInputs[slot] : String(slotPresses[slot] ?? 8);
+  const getSeconds = (slot: number) =>
+    secInputs[slot] !== undefined ? secInputs[slot] : String(slotSeconds[slot] ?? 6);
 
-  const handleTestPress = async (slot: number) => {
+  const handleTestPour = async (slot: number) => {
     setTestingSlot(slot);
     setTestResult((prev) => ({ ...prev, [slot]: undefined as unknown as 'ok' }));
     const res = await testPress(slot);
@@ -125,13 +125,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     setTestingSlot(null);
   };
 
-  const handleSavePresses = async (slot: number) => {
-    const val = parseInt(getPresses(slot), 10);
-    if (isNaN(val) || val < 1 || val > 30) return;
+  const handleSaveSeconds = async (slot: number) => {
+    const val = parseInt(getSeconds(slot), 10);
+    if (isNaN(val) || val < 1 || val > 60) return;
     setSavingSlot(slot);
-    await updatePresses(slot, val);
+    await updateSeconds(slot, val);
     setSavingSlot(null);
-    setPressInputs((prev) => {
+    setSecInputs((prev) => {
       const n = { ...prev };
       delete n[slot];
       return n;
@@ -310,10 +310,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
             <div>
               <h2 className="text-xs font-bold uppercase tracking-wider admin-text-3 flex items-center gap-2">
                 <Sliders className="w-3.5 h-3.5 text-amber-500" />
-                <span>Airpot Servo Calibration & Arm Testing</span>
+                <span>Airpot Pour Duration Calibration</span>
               </h2>
               <p className="text-xs admin-text-3 mt-0.5">
-                Configure servo presses per cup to match the {VOLUME_ML} ml cup target. Use test press to calibrate mechanical throw.
+                Set how many seconds each airpot relay stays open per cup. Use test pour to verify flow volume.
               </p>
             </div>
             <div className="hidden sm:flex items-center gap-2 text-xs admin-faint">
@@ -325,9 +325,9 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {DRINKS.map((drink) => {
               const slot = drink.slot;
-              const pressVal = getPresses(slot);
-              const numVal = parseInt(pressVal, 10);
-              const isEdited = pressInputs[slot] !== undefined;
+              const secVal = getSeconds(slot);
+              const numVal = parseInt(secVal, 10);
+              const isEdited = secInputs[slot] !== undefined;
               const isTesting = testingSlot === slot;
               const isSaving = savingSlot === slot;
               const result = testResult[slot];
@@ -378,18 +378,18 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       </div>
                     </div>
 
-                    {/* Presses Stepper Controller */}
+                    {/* Pour Duration Stepper Controller */}
                     <div className="mb-4">
                       <label className="block text-xs font-semibold admin-text-2 mb-2">
-                        Servo Presses per Cup (1–30)
+                        Pour Duration in Seconds (1–60)
                       </label>
                       <div className="flex items-center gap-2">
                         <button
                           type="button"
                           onClick={() =>
-                            setPressInputs((prev) => ({
+                            setSecInputs((prev) => ({
                               ...prev,
-                              [slot]: String(Math.max(1, (parseInt(getPresses(slot), 10) || 1) - 1)),
+                              [slot]: String(Math.max(1, (parseInt(getSeconds(slot), 10) || 1) - 1)),
                             }))
                           }
                           className="admin-btn-secondary w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg cursor-pointer"
@@ -400,10 +400,10 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         <input
                           type="number"
                           min={1}
-                          max={30}
-                          value={pressVal}
+                          max={60}
+                          value={secVal}
                           onChange={(e) =>
-                            setPressInputs((prev) => ({ ...prev, [slot]: e.target.value }))
+                            setSecInputs((prev) => ({ ...prev, [slot]: e.target.value }))
                           }
                           className="admin-input flex-1 h-10 rounded-xl text-center font-mono font-bold text-base"
                         />
@@ -411,9 +411,9 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         <button
                           type="button"
                           onClick={() =>
-                            setPressInputs((prev) => ({
+                            setSecInputs((prev) => ({
                               ...prev,
-                              [slot]: String(Math.min(30, (parseInt(getPresses(slot), 10) || 1) + 1)),
+                              [slot]: String(Math.min(60, (parseInt(getSeconds(slot), 10) || 1) + 1)),
                             }))
                           }
                           className="admin-btn-secondary w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg cursor-pointer"
@@ -430,7 +430,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     <button
                       type="button"
                       disabled={!isEdited || isSaving}
-                      onClick={() => handleSavePresses(slot)}
+                      onClick={() => handleSaveSeconds(slot)}
                       className={`w-full py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
                         isEdited
                           ? 'bg-[#442713] hover:bg-[#644B37] text-white shadow-xs'
@@ -443,26 +443,26 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                           <span>Saving...</span>
                         </>
                       ) : (
-                        <span>{isEdited ? 'Save New Press Count' : 'Press Count Synced'}</span>
+                        <span>{isEdited ? 'Save New Duration' : 'Duration Synced'}</span>
                       )}
                     </button>
 
-                    {/* Test Fire Servo Button */}
+                    {/* Test Pour Button */}
                     <button
                       type="button"
                       disabled={isTesting}
-                      onClick={() => handleTestPress(slot)}
+                      onClick={() => handleTestPour(slot)}
                       className="admin-btn-secondary w-full py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       {isTesting ? (
                         <>
                           <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          <span>Firing Test Press…</span>
+                          <span>Firing Test Pour…</span>
                         </>
                       ) : (
                         <>
                           <Play className="w-3.5 h-3.5" />
-                          <span>Test Fire 1 Press</span>
+                          <span>Test Pour (1s)</span>
                         </>
                       )}
                     </button>
@@ -477,7 +477,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     {result === 'err' && (
                       <p className="text-[11px] text-red-600 dark:text-red-400 flex items-center justify-center gap-1">
                         <XCircle className="w-3.5 h-3.5" />
-                        <span>Could not communicate with servo</span>
+                        <span>Could not communicate with airpot relay</span>
                       </p>
                     )}
                   </div>
@@ -525,7 +525,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </h4>
 
                     <p className="text-xs admin-text-3">
-                      Slot {activeOrder.slot} · {activeOrder.presses} servo presses · ₱{activeOrder.price}.00
+                      Slot {activeOrder.slot} · {activeOrder.pourSeconds}s pour · ₱{activeOrder.price}.00
                     </p>
                   </div>
 
@@ -614,12 +614,21 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     />
                   </div>
 
-                  {/* Export CSV button */}
+                  {/* Export buttons */}
+                  <button
+                    type="button"
+                    onClick={exportHtml}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-xs font-semibold admin-text-2 transition-colors cursor-pointer shrink-0"
+                    title="Export styled HTML report"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>HTML</span>
+                  </button>
                   <button
                     type="button"
                     onClick={exportCsv}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-xs font-semibold admin-text-2 transition-colors cursor-pointer shrink-0"
-                    title="Export complete order history as CSV"
+                    title="Export plain CSV"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>CSV</span>
@@ -665,7 +674,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                         <div className="min-w-0">
                           <p className="font-bold admin-text truncate">{order.drinkName}</p>
                           <p className="admin-text-3 font-mono text-[11px]">
-                            {order.id} · Slot {order.slot} ({order.presses} presses)
+                            {order.id} · Slot {order.slot} ({order.pourSeconds}s)
                           </p>
                         </div>
                       </div>

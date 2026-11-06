@@ -11,7 +11,7 @@ export interface AdminStats {
 export interface AdminSnapshot extends KioskSnapshot {
   allOrders: Order[];
   stats: AdminStats;
-  slotPresses: Record<number, number>;
+  slotSeconds: Record<number, number>;
 }
 
 const DEFAULT_STATS: AdminStats = {
@@ -29,8 +29,8 @@ const DEFAULT: AdminSnapshot = {
   allOrders: [],
   drinks: {} as AdminSnapshot['drinks'],
   volumeMl: 200,
-  pressPerCup: 8,
-  slotPresses: { 1: 8, 2: 8, 3: 8 },
+  pourSeconds: 6,
+  slotSeconds: { 1: 6, 2: 6, 3: 6 },
   stats: DEFAULT_STATS,
 };
 
@@ -88,16 +88,16 @@ export function useAdminBroker(authed: boolean) {
     };
   }, [authed, fetchState]);
 
-  const updatePresses = useCallback(async (slot: number, presses: number) => {
-    const res = await fetch(`/api/admin/slots/${slot}/presses`, {
+  const updateSeconds = useCallback(async (slot: number, seconds: number) => {
+    const res = await fetch(`/api/admin/slots/${slot}/seconds`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-      body: JSON.stringify({ presses }),
+      body: JSON.stringify({ seconds }),
     });
     const json = await res.json();
     if (json?.ok) {
-      setData((prev) => ({ ...prev, slotPresses: json.slotPresses }));
+      setData((prev) => ({ ...prev, slotSeconds: json.slotSeconds }));
     }
     return json;
   }, []);
@@ -110,8 +110,12 @@ export function useAdminBroker(authed: boolean) {
     return res.json();
   }, []);
 
-  const exportCsv = useCallback(() => {
+  const exportHtml = useCallback(() => {
     window.location.href = '/api/admin/orders/export';
+  }, []);
+
+  const exportCsv = useCallback(() => {
+    window.location.href = '/api/admin/orders/export/csv';
   }, []);
 
   const resetKiosk = useCallback(async () => {
@@ -119,5 +123,5 @@ export function useAdminBroker(authed: boolean) {
     await fetchState();
   }, [fetchState]);
 
-  return { data, wsConnected, updatePresses, testPress, exportCsv, resetKiosk };
+  return { data, wsConnected, updateSeconds, testPress, exportCsv, exportHtml, resetKiosk };
 }

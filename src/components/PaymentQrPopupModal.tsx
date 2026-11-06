@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, X, Loader2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, X, Loader2 } from 'lucide-react';
 import { QrCodeDisplay } from './QrCodeDisplay';
 import type { Order } from '../hooks/useTricoffBroker';
 
@@ -126,18 +126,7 @@ export const PaymentQrPopupModal: React.FC<PaymentQrPopupModalProps> = ({
             <span className="font-semibold">Waiting for payment…</span>
           </div>
 
-          {/* Simulated Payment Link for Testing & Verification */}
-          <div className="mt-2.5 pt-2 border-t border-stone-200/50 w-full flex flex-col items-center gap-1">
-            <a
-              href={`/pay/${order.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white hover:bg-[#442713] text-[#A5754A] hover:text-white text-[11px] font-semibold shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer"
-            >
-              <span>Open simulated payment page</span>
-              <ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
+
 
         </div>
       </div>
