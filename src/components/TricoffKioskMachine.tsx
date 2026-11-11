@@ -207,7 +207,7 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
                                   <Loader2 className="w-4 h-4 animate-spin" />
                                 </span>
                               ) : (
-                                <span className="font-sans font-extrabold text-xl sm:text-[22px] text-[#442713] group-hover:text-white tracking-tight tabular-nums leading-none transition-colors duration-300">
+                                <span className="font-money font-extrabold text-xl sm:text-[22px] text-[#442713] group-hover:text-white tracking-tight tabular-nums leading-none transition-colors duration-300">
                                   ₱{drink.price}.00
                                 </span>
                               )}
@@ -257,7 +257,7 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
                 </h2>
                 
                 <p className="text-xs sm:text-sm text-[#644B37] max-w-md mx-auto">
-                  Ordering <strong className="text-[#442713]">{order.drinkName}</strong> (₱{order.price}.00) for{' '}
+                  Ordering <strong className="text-[#442713]">{order.drinkName}</strong> (<span className="font-money font-bold">₱{order.price}.00</span>) for{' '}
                   <strong className="text-[#A5754A]">Slot {order.slot}</strong>. 
                 </p>
                 <p className="text-xs sm:text-sm text-[#644B37] max-w-md mx-auto">Choose a payment option to generate your QR code.</p>
@@ -288,7 +288,7 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
                         </span>
                         <div className="w-2 h-1 rounded-full bg-[#FCD116]" />
                       </div>
-                      <span className="font-sans font-extrabold text-xl sm:text-2xl text-[#442713] group-hover:text-white tabular-nums transition-colors duration-300">
+                      <span className="font-money font-extrabold text-xl sm:text-2xl text-[#442713] group-hover:text-white tabular-nums transition-colors duration-300">
                         ₱{order.price}.00
                       </span>
                     </div>
@@ -320,7 +320,7 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
                         <span className="font-extrabold text-xs text-[#00529B] group-hover:text-[#90CDF4] leading-none">insta</span>
                         <span className="font-black text-xs text-[#E11931] group-hover:text-[#FEB2B2] leading-none">Pay</span>
                       </div>
-                      <span className="font-sans font-extrabold text-xl sm:text-2xl text-[#442713] group-hover:text-white tabular-nums transition-colors duration-300">
+                      <span className="font-money font-extrabold text-xl sm:text-2xl text-[#442713] group-hover:text-white tabular-nums transition-colors duration-300">
                         ₱{order.price}.00
                       </span>
                     </div>
@@ -362,10 +362,10 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
                and waiting state)
           ════════════════════════════════════════════════ */}
           {orderStatus === 'created' && order && paymentStep === 'qr' && (
-            <div className="w-full max-w-[340px] sm:max-w-[360px] mx-auto rounded-[26px] sm:rounded-[30px] bg-[#EFE36E] shadow-[0_16px_36px_rgba(0,0,0,0.09),0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden animate-in fade-in duration-200 my-auto">
+            <div className="w-full max-w-[340px] sm:max-w-[360px] mx-auto rounded-[26px] sm:rounded-[30px] bg-[#FAF7F2] shadow-[0_16px_36px_rgba(0,0,0,0.09),0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden animate-in fade-in duration-200 my-auto">
               
-              {/* Header Navigation: Back + Cancel (clean, no divider line) */}
-              <div className="px-4 py-2 sm:px-5 sm:py-2.5 bg-[#F2ECE2] flex items-center justify-between">
+              {/* Header Navigation: Back + Cancel (clean, same cream color) */}
+              <div className="px-4 py-2 sm:px-5 sm:py-2.5 bg-[#FAF7F2] flex items-center justify-between">
                 <button
                   type="button"
                   onClick={handleBackToSelect}
@@ -390,30 +390,7 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
                 
                 {/* Step 3 Badge */}
                 <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white text-[#644B37] text-[11px] font-semibold shadow-2xs mb-1.5">
-                  <span>Step 3 · Scan to Pay</span>
-                </div>
-
-                {/* Method Identification Badge */}
-                <div className="mb-1">
-                  {selectedRail === 'QRPh' ? (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-blue-50 shadow-2xs">
-                      <span className="font-extrabold text-[11px] tracking-wider">
-                        <span className="text-[#0038A8]">QR</span>
-                        <span className="text-[#CE1126]">Ph</span>
-                      </span>
-                      <span className="text-stone-300">·</span>
-                      <span className="text-[11px] font-medium text-[#442713]">National QR</span>
-                    </div>
-                  ) : (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-red-50 shadow-2xs">
-                      <span className="font-extrabold text-[11px] tracking-wider">
-                        <span className="text-[#00529B]">insta</span>
-                        <span className="text-[#E11931]">Pay</span>
-                      </span>
-                      <span className="text-stone-300">·</span>
-                      <span className="text-[11px] font-medium text-[#442713]">Interbank QR</span>
-                    </div>
-                  )}
+                  <span>Step 3</span>
                 </div>
 
                 {/* Specific Method Instruction */}
@@ -423,12 +400,12 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
                     : 'Scan using your supported banking app.'}
                 </p>
 
-                {/* Prominent Amount (clean, NO white background box) */}
-                <div className="my-1.5 flex items-baseline justify-center gap-1.5">
+                {/* Total Amount with price placed below */}
+                <div className="my-1.5 flex flex-col items-center justify-center">
                   <span className="text-[11px] uppercase tracking-wider font-semibold text-[#644B37]">
-                    Total Amount:
+                    Total Amount
                   </span>
-                  <span className="font-sans font-extrabold text-lg sm:text-xl text-[#442713] tabular-nums">
+                  <span className="font-money font-extrabold text-2xl sm:text-3xl text-[#442713] tabular-nums leading-tight">
                     ₱{order.price}.00
                   </span>
                 </div>
@@ -451,8 +428,31 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
                   </div>
                 </a>
 
+                {/* QRPh / InstaPay Badge placed BELOW the QR code */}
+                <div className="mt-2.5 mb-0.5">
+                  {selectedRail === 'QRPh' ? (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 shadow-2xs">
+                      <span className="font-extrabold text-xs tracking-wider">
+                        <span className="text-[#0038A8]">QR</span>
+                        <span className="text-[#CE1126]">Ph</span>
+                      </span>
+                      <span className="text-stone-300">·</span>
+                      <span className="text-[11px] font-semibold text-[#442713]">National QR</span>
+                    </div>
+                  ) : (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 shadow-2xs">
+                      <span className="font-extrabold text-xs tracking-wider">
+                        <span className="text-[#00529B]">insta</span>
+                        <span className="text-[#E11931]">Pay</span>
+                      </span>
+                      <span className="text-stone-300">·</span>
+                      <span className="text-[11px] font-semibold text-[#442713]">Interbank QR</span>
+                    </div>
+                  )}
+                </div>
+
                 {/* Waiting State Indicator */}
-                <div className="mt-2.5 flex items-center justify-center gap-2 text-[#442713] text-xs font-semibold">
+                <div className="mt-2 flex items-center justify-center gap-2 text-[#442713] text-xs font-semibold">
                   <Loader2 className="w-3.5 h-3.5 text-[#A5754A] animate-spin" />
                   <span>Waiting for payment…</span>
                 </div>
@@ -507,7 +507,7 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-[#644B37]">Amount</span>
-                  <span className="font-sans tabular-nums text-[#442713] font-bold">₱{order.price}.00 (Settled)</span>
+                  <span className="font-money tabular-nums text-[#442713] font-bold">₱{order.price}.00 (Settled)</span>
                 </div>
               </div>
 
@@ -530,7 +530,7 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
               STATE 5: FAILED / CANCELLED
           ════════════════════════════════════════════════ */}
           {orderStatus === 'failed' && order && (
-            <div className="max-w-sm mx-auto rounded-[26px] sm:rounded-[30px] bg-[#EFE36E] shadow-[0_16px_36px_rgba(0,0,0,0.09),0_4px_12px_rgba(0,0,0,0.05)] p-6 sm:p-7 text-center space-y-4 animate-in zoom-in-95 duration-200 my-auto">
+            <div className="max-w-sm mx-auto rounded-[26px] sm:rounded-[30px] bg-[#FAF7F2] shadow-[0_16px_36px_rgba(0,0,0,0.09),0_4px_12px_rgba(0,0,0,0.05)] p-6 sm:p-7 text-center space-y-4 animate-in zoom-in-95 duration-200 my-auto">
               <div className="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center mx-auto shadow-2xs">
                 <XCircle className="w-7 h-7 text-red-500" />
               </div>

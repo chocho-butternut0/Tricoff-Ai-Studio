@@ -1,6 +1,31 @@
 {
-  "counter": 1063,
+  "counter": 1065,
   "orders": [
+    {
+      "id": "TRC-1064",
+      "drink": "regular",
+      "drinkName": "Regular Roast",
+      "slot": 1,
+      "line": 1,
+      "pourSeconds": 6,
+      "presses": 6,
+      "price": 45,
+      "status": "created",
+      "createdAt": "2026-11-06T06:31:54.128Z",
+      "qrUrl": "http://localhost:3000/pay/TRC-1064"
+    },
+    {
+      "id": "TRC-1063",
+      "drink": "sweetened",
+      "drinkName": "Sweetened Blend",
+      "slot": 2,
+      "line": 2,
+      "pourSeconds": 6,
+      "price": 50,
+      "status": "created",
+      "createdAt": "2026-11-06T06:31:42.282Z",
+      "qrUrl": "http://localhost:3000/pay/TRC-1063"
+    },
     {
       "id": "TRC-1062",
       "drink": "regular",
@@ -46,7 +71,7 @@
       "line": 2,
       "presses": 8,
       "price": 50,
-      "status": "created",
+      "status": "failed",
       "createdAt": "2026-10-29T04:59:32.787Z",
       "qrUrl": "http://192.168.4.200:3000/pay/TRC-1059"
     },

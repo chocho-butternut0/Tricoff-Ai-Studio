@@ -220,6 +220,7 @@ export interface Order {
   slot: number;
   line: number;
   pourSeconds: number;
+  presses?: number;
   price: number;
   status: OrderStatus;
   createdAt: string;
@@ -356,18 +357,20 @@ function createOrder(drinkId: DrinkId, reqHost?: string): Order | null {
   const protocol = isLocal ? 'http' : 'https';
   const qrUrl = `${protocol}://${host}/pay/${id}`;
 
-  const order: Order = {
-    id,
-    drink: spec.id,
-    drinkName: spec.name,
-    slot: spec.slot,
-    line: spec.line,
-    pourSeconds: slotSeconds[spec.slot] ?? spec.pourSeconds,
-    price: spec.price,
-    status: 'created',
-    createdAt: new Date().toISOString(),
-    qrUrl,
-  };
+    const pourSec = slotSeconds[spec.slot] ?? spec.pourSeconds;
+    const order: Order = {
+      id,
+      drink: spec.id,
+      drinkName: spec.name,
+      slot: spec.slot,
+      line: spec.line,
+      pourSeconds: pourSec,
+      presses: pourSec,
+      price: spec.price,
+      status: 'created',
+      createdAt: new Date().toISOString(),
+      qrUrl,
+    };
 
   orders.set(id, order);
   allOrdersStore.unshift(order);
@@ -460,7 +463,9 @@ function buildPaymentPage(order: Order): string {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>TRICOFF — Confirm Order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -569,12 +574,18 @@ function buildPaymentPage(order: Order): string {
     font-weight: 500;
     opacity: 0.82;
   }
+  .font-money {
+    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+    font-variant-numeric: tabular-nums !important;
+  }
   .hero-price-badge {
     position: absolute;
     top: 1rem;
     right: 1rem;
     background: rgba(255,255,255,0.96);
     color: var(--dk);
+    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
     font-size: 1.3rem;
     font-weight: 900;
     padding: 0.35rem 0.9rem;
@@ -662,6 +673,8 @@ function buildPaymentPage(order: Order): string {
     font-size: 1.1rem;
     font-weight: 900;
     color: var(--dk);
+    font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-variant-numeric: tabular-nums;
   }
 
   /* ── Slot Instruction ── */
@@ -918,7 +931,7 @@ function buildPaymentPage(order: Order): string {
 
     <!-- CTA -->
     <div class="actions">
-      <button class="btn btn-confirm" id="payBtn" onclick="confirmPayment()">
+      <button class="btn btn-confirm font-money" id="payBtn" onclick="confirmPayment()">
         Confirm &amp; Pay ₱${order.price}.00
       </button>
       <button class="btn btn-cancel" onclick="cancelOrder()">
@@ -960,7 +973,7 @@ function buildPaymentPage(order: Order): string {
       </div>
       <div class="receipt-row">
         <span class="receipt-key">Amount</span>
-        <span class="receipt-val">₱${order.price}.00</span>
+        <span class="receipt-val font-money">₱${order.price}.00</span>
       </div>
     </div>
 
@@ -1340,7 +1353,7 @@ async function startServer() {
           <td style="padding:10px 14px;color:#888;font-size:11px;font-family:monospace">${escape(o.id).slice(0, 8)}…</td>
           <td style="padding:10px 14px;font-weight:600;color:#442713">${escape(o.drinkName)}</td>
           <td style="padding:10px 14px;text-align:center;color:#644B37">Slot ${escape(o.slot)}</td>
-          <td style="padding:10px 14px;text-align:right;font-weight:700;color:#442713;font-family:monospace">₱${escape(o.price)}.00</td>
+          <td style="padding:10px 14px;text-align:right;font-weight:700;color:#442713;font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;font-variant-numeric:tabular-nums">₱${escape(o.price)}.00</td>
           <td style="padding:10px 14px;text-align:center">
             <span style="background:${statusBg[st] ?? '#f3f4f6'};color:${statusColor[st] ?? '#374151'};padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;text-transform:capitalize">${escape(st)}</span>
           </td>
@@ -1356,8 +1369,12 @@ async function startServer() {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TriCoff Order Report — ${exportDate}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    .font-money { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; font-variant-numeric: tabular-nums !important; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f0e8; color: #442713; padding: 32px 24px; }
     .page { max-width: 1100px; margin: 0 auto; }
 
@@ -1426,7 +1443,7 @@ async function startServer() {
       </div>
       <div class="stat-card">
         <div class="stat-label">Total Revenue</div>
-        <div class="stat-value">₱${totalRevenue}</div>
+        <div class="stat-value font-money">₱${totalRevenue}.00</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Failed</div>

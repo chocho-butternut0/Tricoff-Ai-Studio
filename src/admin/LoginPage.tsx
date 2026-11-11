@@ -63,7 +63,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             Kiosk Operations
           </h1>
           <p className="text-xs admin-text-3 mt-1">
-            Hardware servo calibration & transaction ledger
+            Hardware dispensing calibration & transaction ledger
           </p>
         </div>
 

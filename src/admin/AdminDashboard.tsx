@@ -254,7 +254,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <PhilippinePeso className="w-4 h-4" />
                 </div>
               </div>
-              <p className="text-3xl font-extrabold font-mono text-[#442713] dark:text-[#FBF9F5] tabular-nums">
+              <p className="text-3xl font-extrabold font-money text-[#442713] dark:text-[#FBF9F5] tabular-nums">
                 ₱{stats.revenueToday}.00
               </p>
               <p className="text-[11px] admin-faint mt-1">Confirmed settled orders</p>
@@ -349,7 +349,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                             {drink.name}
                           </h3>
                           <p className="text-xs admin-text-3">
-                            Slot {slot} · {drink.functionCode} · ₱{drink.price}.00
+                            Slot {slot} · {drink.functionCode} · <span className="font-money font-semibold">₱{drink.price}.00</span>
                           </p>
                         </div>
                       </div>
@@ -525,7 +525,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                     </h4>
 
                     <p className="text-xs admin-text-3">
-                      Slot {activeOrder.slot} · {activeOrder.pourSeconds}s pour · ₱{activeOrder.price}.00
+                      Slot {activeOrder.slot} · {activeOrder.pourSeconds}s pour · <span className="font-money font-semibold">₱{activeOrder.price}.00</span>
                     </p>
                   </div>
 
@@ -680,7 +680,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       </div>
 
                       <div className="text-right shrink-0">
-                        <p className="font-mono font-bold text-amber-700 dark:text-amber-400">
+                        <p className="font-money font-bold text-amber-700 dark:text-amber-400 tabular-nums">
                           ₱{order.price}.00
                         </p>
                         <p className="admin-faint text-[10px]">

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Volume2, VolumeX, Sparkles } from 'lucide-react';
+import { Volume2, VolumeX, Sparkles, Clock, Flame } from 'lucide-react';
 import type { Order } from '../hooks/useTricoffBroker';
 
 interface CoffeeBrewingPourAnimationProps {
@@ -11,8 +11,8 @@ export const CoffeeBrewingPourAnimation: React.FC<CoffeeBrewingPourAnimationProp
   order,
   volumeMl = 200,
 }) => {
-  // Estimated pour time based on server press count (1s initial + presses * 1s)
-  const totalDurationSec = Math.max(6, 1 + order.presses);
+  // Pour duration strictly based on seconds
+  const pourDuration = Math.max(4, order.pourSeconds || 6);
   const [elapsedSec, setElapsedSec] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -22,32 +22,40 @@ export const CoffeeBrewingPourAnimation: React.FC<CoffeeBrewingPourAnimationProp
     const start = Date.now();
     const interval = setInterval(() => {
       const current = (Date.now() - start) / 1000;
-      setElapsedSec(Math.min(totalDurationSec, current));
-    }, 50);
+      setElapsedSec(Math.min(pourDuration, current));
+    }, 40);
     return () => clearInterval(interval);
-  }, [totalDurationSec]);
+  }, [pourDuration]);
 
-  const progressPercent = Math.min(100, Math.round((elapsedSec / totalDurationSec) * 100));
-  const isPouringActive = progressPercent > 2 && progressPercent < 97;
+  const progressPercent = Math.min(100, (elapsedSec / pourDuration) * 100);
+  const isPouringActive = progressPercent > 2 && progressPercent < 98;
+  const remainingSec = Math.max(0, pourDuration - elapsedSec);
   const currentMl = Math.min(volumeMl, Math.round((progressPercent / 100) * volumeMl));
-  const currentPress = Math.min(order.presses, Math.max(1, Math.ceil((progressPercent / 100) * order.presses)));
 
-  // Coffee level inside cup rises smoothly from 12% to 88%
-  const fillHeightPercent = 12 + (progressPercent / 100) * 76;
-  const liquidTopY = 336 - (212 * fillHeightPercent) / 100;
-  const cremaRx = 56 + (fillHeightPercent / 100) * 14;
-  const cremaRy = 9 + (fillHeightPercent / 100) * 3.5;
+  // 2D Liquid Fill Geometry (flat front view)
+  // Inside cup Y ranges from bottom 318 down to top fill 128 (85% cup height)
+  const cupBottomY = 318;
+  const cupFullY = 128;
+  const liquidY = cupBottomY - (progressPercent / 100) * (cupBottomY - cupFullY);
+
+  // Linear width of the tapered cup at liquid level:
+  // At y = 318, inner width = 114 (x: 123 to 237)
+  // At y = 128, inner width = 154 (x: 103 to 257)
+  const fillRatio = Math.max(0, Math.min(1, (cupBottomY - liquidY) / (cupBottomY - cupFullY)));
+  const liquidWidth = 114 + fillRatio * (154 - 114);
+  const liquidLeftX = 180 - liquidWidth / 2;
 
   // Gentle synthetic sound for realistic pour ambiance (optional toggle)
   const toggleSound = () => {
     if (!soundEnabled) {
       try {
-        const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+        const AudioCtx =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
         if (!AudioCtx) return;
         const ctx = new AudioCtx();
         audioContextRef.current = ctx;
 
-        // Create pink/brown noise for warm liquid trickle sound
         const bufferSize = ctx.sampleRate * 2;
         const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -102,26 +110,25 @@ export const CoffeeBrewingPourAnimation: React.FC<CoffeeBrewingPourAnimationProp
   return (
     <div className="w-full max-w-xl mx-auto flex flex-col items-center">
       {/* Header status */}
-      <div className="text-center mb-4 sm:mb-5">
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FAF7F2] text-[#644B37] text-xs font-semibold mb-2.5 shadow-xs">
+      <div className="text-center mb-3 sm:mb-4">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#FAF7F2] text-[#644B37] text-xs font-semibold mb-2 shadow-xs">
           <span className="w-2.5 h-2.5 rounded-full bg-[#A5754A] animate-ping" />
-          <span>Step 4 · Airpot Dispensing Active · Slot {order.slot}</span>
+          <span>Step 4 · Dispensing Brew · Slot {order.slot}</span>
         </div>
         <h2 className="font-serif-display text-2xl sm:text-3xl lg:text-4xl font-bold text-[#442713] tracking-tight">
           Pouring your {order.drinkName}
         </h2>
-        <p className="text-xs sm:text-sm text-[#644B37] mt-1.5 max-w-md mx-auto leading-relaxed">
-          Keep your cup placed directly beneath <strong className="text-[#442713]">Slot {order.slot}</strong>. Fresh highland brew is being extracted.
+        <p className="text-xs sm:text-sm text-[#644B37] mt-1 max-w-md mx-auto leading-relaxed">
+          Keep your cup placed beneath <strong className="text-[#442713]">Slot {order.slot}</strong>. Fresh highland brew is dispensing.
         </p>
       </div>
 
-      {/* Animation Stage */}
-      <div className="relative w-full max-w-md h-[390px] sm:h-[410px] flex items-center justify-center bg-gradient-to-b from-[#FAF7F2] via-[#F4EDE2] to-[#E9DFD2] rounded-[36px] p-5 shadow-[0_16px_36px_rgba(0,0,0,0.08),0_4px_12px_rgba(0,0,0,0.04)] overflow-hidden">
+      {/* Animation Stage: Light cream card (#FAF7F2) */}
+      <div className="relative w-full max-w-md h-[400px] sm:h-[420px] flex items-center justify-center bg-[#FAF7F2] rounded-[32px] p-4 shadow-[0_16px_36px_rgba(0,0,0,0.08),0_4px_12px_rgba(0,0,0,0.04)] overflow-hidden">
         
-        {/* Soft background ambient warmth */}
+        {/* Soft background warm glow */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-80 h-80 rounded-full bg-[#B18A61]/25 blur-3xl animate-pulse" />
-          <div className="w-48 h-48 rounded-full bg-[#E5B582]/20 blur-2xl" />
+          <div className="w-72 h-72 rounded-full bg-[#A5754A]/10 blur-3xl animate-pulse" />
         </div>
 
         {/* Audio Ambiance Toggle in Top-Right */}
@@ -129,96 +136,82 @@ export const CoffeeBrewingPourAnimation: React.FC<CoffeeBrewingPourAnimationProp
           type="button"
           onClick={toggleSound}
           title={soundEnabled ? 'Mute pour sound' : 'Enable pour sound ambiance'}
-          className="absolute top-3.5 right-3.5 z-20 p-2 rounded-full bg-white/80 hover:bg-white text-[#644B37] hover:text-[#442713] shadow-xs backdrop-blur-xs transition-all duration-200 cursor-pointer"
+          className="absolute top-3.5 right-3.5 z-20 p-2 rounded-full bg-white/90 hover:bg-white text-[#644B37] hover:text-[#442713] shadow-xs backdrop-blur-xs transition-all duration-200 cursor-pointer"
         >
           {soundEnabled ? <Volume2 className="w-4 h-4 text-[#A5754A]" /> : <VolumeX className="w-4 h-4 opacity-60" />}
         </button>
 
-        {/* Live Extraction Rate Gauge in Top-Left */}
-        <div className="absolute top-3.5 left-3.5 z-20 px-3 py-1 rounded-full bg-white/85 backdrop-blur-xs shadow-xs flex items-center gap-1.5 text-[11px] font-semibold text-[#442713]">
-          <Sparkles className="w-3.5 h-3.5 text-[#A5754A]" />
-          <span>88°C Hot Bypass</span>
+        {/* Live Temperature / Extraction Status in Top-Left */}
+        <div className="absolute top-3.5 left-3.5 z-20 px-3 py-1 rounded-full bg-white/90 backdrop-blur-xs shadow-xs flex items-center gap-1.5 text-[11px] font-semibold text-[#442713]">
+          <Flame className="w-3.5 h-3.5 text-[#A5754A]" />
+          <span>88°C Fresh Extraction</span>
         </div>
 
-        {/* SVG Drawing of Precision Airpot Nozzle + Laminar Stream + 3D Paper Cup */}
+        {/* ── 2D Flat Vector SVG Scene ── */}
         <svg
-          viewBox="0 0 340 380"
-          className="w-full h-full max-w-[325px] max-h-[380px] drop-shadow-md overflow-visible select-none"
+          viewBox="0 0 360 380"
+          className="w-full h-full max-w-[330px] max-h-[380px] drop-shadow-sm overflow-visible select-none"
         >
           <defs>
-            {/* Core coffee stream gradient */}
-            <linearGradient id="streamBodyGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#2E160A" />
-              <stop offset="25%" stopColor="#442713" />
-              <stop offset="60%" stopColor="#7E5632" />
-              <stop offset="85%" stopColor="#B18A61" />
-              <stop offset="100%" stopColor="#2E160A" />
+            {/* Coffee Liquid Gradient */}
+            <linearGradient id="coffeeLiquidGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#4A2612" />
+              <stop offset="40%" stopColor="#371B0B" />
+              <stop offset="100%" stopColor="#220E05" />
             </linearGradient>
 
-            {/* Flowing shimmer for stream core */}
-            <linearGradient id="shimmerGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#FAF1E4" stopOpacity="0.9" />
-              <stop offset="50%" stopColor="#E2A669" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#FAF1E4" stopOpacity="0.9" />
+            {/* Crema Foam Bar Gradient */}
+            <linearGradient id="cremaBarGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#C4915C" />
+              <stop offset="25%" stopColor="#E5B984" />
+              <stop offset="50%" stopColor="#F6D7AC" />
+              <stop offset="75%" stopColor="#E5B984" />
+              <stop offset="100%" stopColor="#C4915C" />
             </linearGradient>
 
-            {/* Crema top surface gradient */}
-            <radialGradient id="cremaRadialGrad" cx="50%" cy="45%" r="55%">
-              <stop offset="0%" stopColor="#E5B582" />
-              <stop offset="40%" stopColor="#C4966A" />
-              <stop offset="75%" stopColor="#966C44" />
-              <stop offset="100%" stopColor="#5A3A1F" />
-            </radialGradient>
-
-            {/* Metallic nozzle chrome gradient */}
-            <linearGradient id="chromeGrad" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#4A4540" />
-              <stop offset="25%" stopColor="#8C847C" />
-              <stop offset="50%" stopColor="#D9D4CC" />
-              <stop offset="75%" stopColor="#8C847C" />
-              <stop offset="100%" stopColor="#3A3530" />
+            {/* Stream Core Gradient */}
+            <linearGradient id="streamGrad2D" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#2B1408" />
+              <stop offset="40%" stopColor="#572C13" />
+              <stop offset="65%" stopColor="#8C5326" />
+              <stop offset="100%" stopColor="#2B1408" />
             </linearGradient>
 
-            {/* Paper cup gradient shading for 3D depth */}
-            <linearGradient id="paperCupShading" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor="#E8E2D6" />
-              <stop offset="12%" stopColor="#FAF7F2" />
-              <stop offset="50%" stopColor="#FFFFFF" />
-              <stop offset="85%" stopColor="#F6F1EA" />
-              <stop offset="100%" stopColor="#D8D0C2" />
+            {/* Dispenser Chrome Gradient */}
+            <linearGradient id="dispenserChrome" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#4D433A" />
+              <stop offset="35%" stopColor="#9C8F83" />
+              <stop offset="50%" stopColor="#E0D7CD" />
+              <stop offset="65%" stopColor="#9C8F83" />
+              <stop offset="100%" stopColor="#3A322A" />
             </linearGradient>
 
-            {/* Interior liquid clip path */}
-            <clipPath id="cupInteriorClip">
-              <polygon points="98,124 242,124 226,336 114,336" />
+            {/* Cup Interior Clipping Mask (flat 2D inner boundary) */}
+            <clipPath id="innerCupClip2D">
+              <polygon points="103,110 257,110 237,318 123,318" />
             </clipPath>
-
-            {/* Filter for smooth steam diffusion */}
-            <filter id="softSteamBlur" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="3.5" />
-            </filter>
           </defs>
 
-          {/* ── 1. Airpot Dispenser Nozzle & Mounting Head ── */}
-          <g id="airpotDispenserHead">
-            {/* Top mounting block */}
-            <rect x="130" y="4" width="80" height="14" rx="4" fill="#2E2C2A" />
-            <rect x="142" y="18" width="56" height="8" fill="url(#chromeGrad)" />
+          {/* ═════════════════════════════════════════════════════
+              1. DISPENSER HEAD & NOZZLE (Flat 2D front view)
+          ═════════════════════════════════════════════════════ */}
+          <g id="dispenserHead2D">
+            {/* Top mount bar */}
+            <rect x="135" y="0" width="90" height="10" rx="3" fill="#2E2822" />
+            <rect x="150" y="10" width="60" height="8" rx="1" fill="url(#dispenserChrome)" />
             
-            {/* Conical chrome spout nozzle */}
-            <path d="M154 26 L186 26 L178 52 L162 52 Z" fill="url(#chromeGrad)" />
-            <ellipse cx="170" cy="52" rx="8" ry="3" fill="#252321" />
-            <ellipse cx="170" cy="52" rx="5" ry="1.8" fill="#141312" />
+            {/* Conical 2D spout */}
+            <polygon points="166,18 194,18 188,38 172,38" fill="url(#dispenserChrome)" />
+            <rect x="173" y="38" width="14" height="4" rx="2" fill="#25201C" />
 
-            {/* Glowing amber extraction ring when actively pouring */}
+            {/* Dispensing active glow indicator */}
             {isPouringActive && (
-              <ellipse
-                cx="170"
-                cy="52"
-                rx="9"
-                ry="3.5"
+              <circle
+                cx="180"
+                cy="38"
+                r="6"
                 fill="none"
-                stroke="#E5B582"
+                stroke="#E5B984"
                 strokeWidth="1.5"
                 opacity="0.8"
                 className="animate-ping"
@@ -226,295 +219,372 @@ export const CoffeeBrewingPourAnimation: React.FC<CoffeeBrewingPourAnimationProp
             )}
           </g>
 
-          {/* ── 2. Takeaway Paper Coffee Cup (Behind the Stream) ── */}
-          <g id="paperCoffeeCup">
-            {/* Cup Base Cast Shadow on Tray */}
-            <ellipse cx="170" cy="346" rx="68" ry="11" fill="#2E2015" opacity="0.16" />
-            <ellipse cx="170" cy="344" rx="56" ry="7" fill="#1C130D" opacity="0.14" />
+          {/* ═════════════════════════════════════════════════════
+              2. 2D TAKEAWAY PAPER CUP (Faithful to TRICOFF Photos)
+          ═════════════════════════════════════════════════════ */}
+          <g id="takeawayPaperCup2D">
+            {/* Soft flat contact shadow under cup base */}
+            <ellipse cx="180" cy="330" rx="64" ry="6" fill="#442713" opacity="0.12" />
 
-            {/* Cup Interior Back Wall (dark hollow interior before liquid reaches) */}
-            <ellipse cx="170" cy="124" rx="72" ry="16" fill="#3D2B1F" />
-            <ellipse cx="170" cy="126" rx="69" ry="14" fill="#241810" />
+            {/* Cup Empty Interior Cavity (Deep roasted tone before liquid) */}
+            <polygon
+              points="103,110 257,110 237,318 123,318"
+              fill="#ECE4D6"
+            />
 
-            {/* Liquid Fill Inside Cup (masked strictly inside the cup interior) */}
-            <g clipPath="url(#cupInteriorClip)">
+            {/* Coffee Liquid Rising Inside (Clipped cleanly to inner cup walls) */}
+            <g clipPath="url(#innerCupClip2D)">
               {/* Coffee Liquid Deep Body */}
               <rect
-                x="90"
-                y={liquidTopY}
-                width="160"
-                height={336 - liquidTopY + 10}
-                fill="#26140A"
+                x="95"
+                y={liquidY}
+                width="170"
+                height={330 - liquidY}
+                fill="url(#coffeeLiquidGrad)"
               />
 
-              {/* Rich Crema Layer with Elliptical 3D Surface */}
-              <ellipse
-                cx="170"
-                cy={liquidTopY}
-                rx={cremaRx}
-                ry={cremaRy}
-                fill="url(#cremaRadialGrad)"
+              {/* 2D Golden Crema Foam Bar */}
+              <rect
+                x={liquidLeftX}
+                y={liquidY - 3}
+                width={liquidWidth}
+                height="6"
+                rx="3"
+                fill="url(#cremaBarGrad)"
               />
 
-              {/* Crema swirling rings & foam ripples */}
+              {/* 2D Crema Froth Bubbles along top surface */}
               {isPouringActive && (
-                <>
-                  {/* Expanding ripple ring 1 */}
-                  <ellipse
-                    cx="170"
-                    cy={liquidTopY}
-                    rx="14"
-                    ry="3.5"
-                    fill="none"
-                    stroke="#FCE4C8"
-                    strokeWidth="1.8"
-                    opacity="0.85"
-                  >
-                    <animate attributeName="rx" values="10;36;10" dur="1.2s" repeatCount="indefinite" />
-                    <animate attributeName="ry" values="2.5;9;2.5" dur="1.2s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0.9;0.1;0.9" dur="1.2s" repeatCount="indefinite" />
-                  </ellipse>
-
-                  {/* Expanding ripple ring 2 (delayed) */}
-                  <ellipse
-                    cx="170"
-                    cy={liquidTopY}
-                    rx="22"
-                    ry="5.5"
-                    fill="none"
-                    stroke="#E5B582"
-                    strokeWidth="1.2"
-                    opacity="0.6"
-                  >
-                    <animate attributeName="rx" values="18;48;18" dur="1.5s" repeatCount="indefinite" />
-                    <animate attributeName="ry" values="4.5;12;4.5" dur="1.5s" repeatCount="indefinite" />
-                    <animate attributeName="opacity" values="0.7;0.05;0.7" dur="1.5s" repeatCount="indefinite" />
-                  </ellipse>
-
-                  {/* Swirling crema froth bubble cluster */}
-                  <circle cx="156" cy={liquidTopY - 1} r="2.2" fill="#FCE4C8" opacity="0.7">
-                    <animate attributeName="cx" values="156;158;156" dur="0.8s" repeatCount="indefinite" />
-                  </circle>
-                  <circle cx="184" cy={liquidTopY + 1} r="2" fill="#E8BD93" opacity="0.65">
-                    <animate attributeName="cx" values="184;182;184" dur="0.9s" repeatCount="indefinite" />
-                  </circle>
-                  <circle cx="178" cy={liquidTopY - 2} r="1.6" fill="#FCE4C8" opacity="0.75" />
-                  <circle cx="163" cy={liquidTopY + 2} r="1.8" fill="#E8BD93" opacity="0.6" />
-                </>
+                <g id="cremaBubbles2D">
+                  <circle cx="162" cy={liquidY} r="1.8" fill="#FDE7CF" opacity="0.9" />
+                  <circle cx="170" cy={liquidY - 1} r="2.2" fill="#FFFFFF" opacity="0.85" />
+                  <circle cx="190" cy={liquidY - 1} r="2.0" fill="#FDE7CF" opacity="0.9" />
+                  <circle cx="198" cy={liquidY} r="1.6" fill="#FFFFFF" opacity="0.8" />
+                  <circle cx="152" cy={liquidY + 1} r="1.4" fill="#E5B984" opacity="0.85" />
+                  <circle cx="208" cy={liquidY + 1} r="1.4" fill="#E5B984" opacity="0.85" />
+                </g>
               )}
             </g>
 
-            {/* Cup Outer Body (Paper Cup Front with 3D Shading) */}
-            <path
-              d="M96 124 L114 338 C114 343 226 343 226 338 L244 124 C244 136 96 136 96 124 Z"
-              fill="url(#paperCupShading)"
-            />
-
-            {/* Cup Body Texture Highlight and Shading Crease */}
-            <path
-              d="M128 132 L137 334"
-              stroke="#FFFFFF"
-              strokeWidth="7"
-              strokeOpacity="0.5"
-              fill="none"
-            />
-            <path
-              d="M212 132 L203 334"
-              stroke="#D1C9BE"
-              strokeWidth="6"
-              strokeOpacity="0.35"
-              fill="none"
-            />
-
-            {/* Rolled Paper Top Rim Lip */}
-            <ellipse
-              cx="170"
-              cy="124"
-              rx="74"
-              ry="10.5"
+            {/* 2D Paper Cup Outer Walls (White Takeaway Paper Cup as in photo) */}
+            {/* Left and Right Wall Frames */}
+            <polygon
+              points="99,110 106,110 126,318 120,318"
               fill="#FFFFFF"
-              stroke="#DDD6CA"
-              strokeWidth="1.2"
+              stroke="#D8CFBF"
+              strokeWidth="0.8"
             />
-            <ellipse
-              cx="170"
-              cy="124"
-              rx="71"
-              ry="7.8"
-              fill="none"
-              stroke="#EFEBE4"
-              strokeWidth="1.2"
+            <polygon
+              points="254,110 261,110 240,318 234,318"
+              fill="#FFFFFF"
+              stroke="#D8CFBF"
+              strokeWidth="0.8"
             />
 
-            {/* Official TRICOFF Logo Centered on Front of Paper Cup */}
-            <g transform="translate(108, 180)">
-              <image
-                href="/assets/aistudio/green_minimalist_online_wallet_logo__2__5ed61fe2.png"
-                x="0"
-                y="0"
-                width="124"
-                height="75"
-                preserveAspectRatio="xMidYMid meet"
-                style={{ mixBlendMode: 'multiply' }}
-                opacity="0.95"
+            {/* Cup Base Seam (Rolled bottom paper lip) */}
+            <rect
+              x="120"
+              y="318"
+              width="120"
+              height="8"
+              rx="2"
+              fill="#FFFFFF"
+              stroke="#D8CFBF"
+              strokeWidth="1"
+            />
+            <line x1="122" y1="322" x2="238" y2="322" stroke="#E5DECf" strokeWidth="1" />
+
+            {/* Center Front Cup Branding Card / Shield (Clean white paper backdrop) */}
+            <g id="cupFrontBranding">
+              {/* White takeaway paper label belly-band */}
+              <rect
+                x="110"
+                y="155"
+                width="140"
+                height="136"
+                rx="14"
+                fill="#FFFFFF"
+                stroke="#E2D8C9"
+                strokeWidth="1.2"
+                className="shadow-sm"
               />
+
+              {/* Exact TRICOFF Vector Logo from Repository (Preserved & Scaled) */}
+              <svg
+                x="118"
+                y="164"
+                width="124"
+                height="80"
+                viewBox="256 514 1486 987"
+                preserveAspectRatio="xMidYMid meet"
+              >
+                {/* Steam wisps */}
+                <path
+                  fill="#A77B53"
+                  fillRule="evenodd"
+                  d="M1175.0,552.0C1171.7,551.0 1171.7,552.7 1171.0,554.0C1170.3,555.3 1169.7,557.0 1171.0,560.0C1172.3,563.0 1177.3,568.5 1179.0,572.0C1180.7,575.5 1180.7,577.3 1181.0,581.0C1181.3,584.7 1181.7,589.2 1181.0,594.0C1180.3,598.8 1180.0,603.5 1177.0,610.0C1174.0,616.5 1170.8,623.7 1163.0,633.0C1155.2,642.3 1137.8,657.5 1130.0,666.0C1122.2,674.5 1119.7,678.3 1116.0,684.0C1112.3,689.7 1110.2,693.7 1108.0,700.0C1105.8,706.3 1103.5,714.3 1103.0,722.0C1102.5,729.7 1102.8,737.8 1105.0,746.0C1107.2,754.2 1111.7,764.0 1116.0,771.0C1120.3,778.0 1124.8,783.0 1131.0,788.0C1137.2,793.0 1148.7,799.2 1153.0,801.0C1157.3,802.8 1156.3,800.3 1157.0,799.0C1157.7,797.7 1158.3,796.5 1157.0,793.0C1155.7,789.5 1150.8,782.8 1149.0,778.0C1147.2,773.2 1146.0,770.5 1146.0,764.0C1146.0,757.5 1146.2,747.5 1149.0,739.0C1151.8,730.5 1154.2,724.7 1163.0,713.0C1171.8,701.3 1193.8,679.5 1202.0,669.0C1210.2,658.5 1209.5,656.8 1212.0,650.0C1214.5,643.2 1216.3,635.3 1217.0,628.0C1217.7,620.7 1217.7,614.0 1216.0,606.0C1214.3,598.0 1211.2,587.7 1207.0,580.0C1202.8,572.3 1196.3,564.7 1191.0,560.0C1185.7,555.3 1178.3,553.0 1175.0,552.0Z"
+                />
+                <path
+                  fill="#A77B53"
+                  fillRule="evenodd"
+                  d="M1255.0,641.0C1252.7,640.3 1249.2,639.0 1248.0,643.0C1246.8,647.0 1249.8,658.0 1248.0,665.0C1246.2,672.0 1245.8,675.3 1237.0,685.0C1228.2,694.7 1203.8,714.2 1195.0,723.0C1186.2,731.8 1186.8,733.0 1184.0,738.0C1181.2,743.0 1179.2,746.5 1178.0,753.0C1176.8,759.5 1176.7,771.2 1177.0,777.0C1177.3,782.8 1177.8,783.3 1180.0,788.0C1182.2,792.7 1186.5,800.5 1190.0,805.0C1193.5,809.5 1198.0,813.7 1201.0,815.0C1204.0,816.3 1207.0,817.8 1208.0,813.0C1209.0,808.2 1205.5,794.3 1207.0,786.0C1208.5,777.7 1208.3,774.2 1217.0,763.0C1225.7,751.8 1250.0,730.2 1259.0,719.0C1268.0,707.8 1268.8,703.8 1271.0,696.0C1273.2,688.2 1272.2,677.7 1272.0,672.0C1271.8,666.3 1271.7,666.2 1270.0,662.0C1268.3,657.8 1264.5,650.5 1262.0,647.0C1259.5,643.5 1257.3,641.7 1255.0,641.0Z"
+                />
+
+                {/* Letters T R I C */}
+                <path
+                  fill="#442713"
+                  fillRule="evenodd"
+                  d="M709.0,784.0C704.5,781.3 700.0,778.8 690.0,778.0C680.0,777.2 665.8,777.0 649.0,779.0C632.2,781.0 610.2,785.0 589.0,790.0C567.8,795.0 543.8,802.0 522.0,809.0C500.2,816.0 483.5,821.8 458.0,832.0C432.5,842.2 389.7,860.5 369.0,870.0C348.3,879.5 344.8,881.8 334.0,889.0C323.2,896.2 310.2,906.5 304.0,913.0C297.8,919.5 297.8,923.5 297.0,928.0C296.2,932.5 297.3,936.5 299.0,940.0C300.7,943.5 304.3,946.8 307.0,949.0C309.7,951.2 311.0,952.2 315.0,953.0C319.0,953.8 308.2,962.5 331.0,954.0C353.8,945.5 430.5,910.8 452.0,902.0C473.5,893.2 458.2,900.5 460.0,901.0C461.8,901.5 464.0,897.7 463.0,905.0C462.0,912.3 465.5,902.5 454.0,945.0C442.5,987.5 404.5,1118.7 394.0,1160.0C383.5,1201.3 390.8,1185.5 391.0,1193.0C391.2,1200.5 393.0,1201.7 395.0,1205.0C397.0,1208.3 400.3,1211.2 403.0,1213.0C405.7,1214.8 407.7,1215.5 411.0,1216.0C414.3,1216.5 418.7,1217.0 423.0,1216.0C427.3,1215.0 432.8,1212.8 437.0,1210.0C441.2,1207.2 444.3,1204.3 448.0,1199.0C451.7,1193.7 454.5,1189.3 459.0,1178.0C463.5,1166.7 466.8,1157.8 475.0,1131.0C483.2,1104.2 497.3,1055.8 508.0,1017.0C518.7,978.2 533.5,922.0 539.0,898.0C544.5,874.0 539.3,878.3 541.0,873.0C542.7,867.7 541.3,869.5 549.0,866.0C556.7,862.5 564.2,859.0 587.0,852.0C609.8,845.0 665.8,830.2 686.0,824.0C706.2,817.8 702.7,818.7 708.0,815.0C713.3,811.3 716.5,805.5 718.0,802.0C719.5,798.5 718.5,797.0 717.0,794.0C715.5,791.0 713.5,786.7 709.0,784.0Z"
+                />
+                <path
+                  fill="#442713"
+                  fillRule="evenodd"
+                  d="M773.0,869.0C768.7,865.3 765.3,863.2 759.0,861.0C752.7,858.8 742.8,856.7 735.0,856.0C727.2,855.3 720.5,856.0 712.0,857.0C703.5,858.0 700.3,857.2 684.0,862.0C667.7,866.8 630.3,879.5 614.0,886.0C597.7,892.5 593.7,895.8 586.0,901.0C578.3,906.2 572.0,912.2 568.0,917.0C564.0,921.8 562.3,925.7 562.0,930.0C561.7,934.3 564.0,940.2 566.0,943.0C568.0,945.8 570.3,946.7 574.0,947.0C577.7,947.3 585.0,944.7 588.0,945.0C591.0,945.3 595.2,936.2 592.0,949.0C588.8,961.8 576.5,995.3 569.0,1022.0C561.5,1048.7 551.0,1089.3 547.0,1109.0C543.0,1128.7 544.7,1133.0 545.0,1140.0C545.3,1147.0 547.3,1148.2 549.0,1151.0C550.7,1153.8 552.8,1155.5 555.0,1157.0C557.2,1158.5 558.8,1159.5 562.0,1160.0C565.2,1160.5 570.3,1160.7 574.0,1160.0C577.7,1159.3 580.8,1158.0 584.0,1156.0C587.2,1154.0 589.8,1152.5 593.0,1148.0C596.2,1143.5 599.0,1140.8 603.0,1129.0C607.0,1117.2 613.5,1086.8 617.0,1077.0C620.5,1067.2 621.5,1070.7 624.0,1070.0C626.5,1069.3 621.8,1065.2 632.0,1073.0C642.2,1080.8 671.7,1107.3 685.0,1117.0C698.3,1126.7 705.3,1128.2 712.0,1131.0C718.7,1133.8 720.0,1133.7 725.0,1134.0C730.0,1134.3 737.0,1134.0 742.0,1133.0C747.0,1132.0 750.5,1130.7 755.0,1128.0C759.5,1125.3 765.3,1121.3 769.0,1117.0C772.7,1112.7 775.8,1106.0 777.0,1102.0C778.2,1098.0 776.8,1095.0 776.0,1093.0C775.2,1091.0 775.5,1091.0 772.0,1090.0C768.5,1089.0 760.7,1089.0 755.0,1087.0C749.3,1085.0 748.5,1085.3 738.0,1078.0C727.5,1070.7 700.3,1050.2 692.0,1043.0C683.7,1035.8 679.0,1043.0 688.0,1035.0C697.0,1027.0 733.3,1004.7 746.0,995.0C758.7,985.3 758.0,984.3 764.0,977.0C770.0,969.7 777.7,958.7 782.0,951.0C786.3,943.3 788.3,938.5 790.0,931.0C791.7,923.5 792.8,914.0 792.0,906.0C791.2,898.0 788.2,889.2 785.0,883.0C781.8,876.8 777.3,872.7 773.0,869.0ZM727.0,908.0C729.3,910.0 731.2,913.5 732.0,916.0C732.8,918.5 733.3,918.7 732.0,923.0C730.7,927.3 726.7,937.0 724.0,942.0C721.3,947.0 723.0,946.0 716.0,953.0C709.0,960.0 692.7,976.0 682.0,984.0C671.3,992.0 658.2,998.0 652.0,1001.0C645.8,1004.0 647.0,1003.2 645.0,1002.0C643.0,1000.8 637.5,1007.0 640.0,994.0C642.5,981.0 653.8,937.5 660.0,924.0C666.2,910.5 670.5,916.0 677.0,913.0C683.5,910.0 692.2,907.5 699.0,906.0C705.8,904.5 713.3,903.7 718.0,904.0C722.7,904.3 724.7,906.0 727.0,908.0Z"
+                />
+                <path
+                  fill="#442713"
+                  fillRule="evenodd"
+                  d="M875.0,833.0C869.5,832.8 859.3,835.0 855.0,836.0C850.7,837.0 851.5,836.8 849.0,839.0C846.5,841.2 846.0,830.8 840.0,849.0C834.0,867.2 820.0,918.7 813.0,948.0C806.0,977.3 801.2,1005.2 798.0,1025.0C794.8,1044.8 793.8,1057.2 794.0,1067.0C794.2,1076.8 797.2,1080.2 799.0,1084.0C800.8,1087.8 802.3,1088.3 805.0,1090.0C807.7,1091.7 811.2,1093.7 815.0,1094.0C818.8,1094.3 824.7,1093.0 828.0,1092.0C831.3,1091.0 832.0,1091.3 835.0,1088.0C838.0,1084.7 840.2,1092.7 846.0,1072.0C851.8,1051.3 861.3,999.3 870.0,964.0C878.7,928.7 893.3,878.8 898.0,860.0C902.7,841.2 898.5,853.7 898.0,851.0C897.5,848.3 896.7,846.3 895.0,844.0C893.3,841.7 891.3,838.8 888.0,837.0C884.7,835.2 880.5,833.2 875.0,833.0Z"
+                />
+                <path
+                  fill="#442713"
+                  fillRule="evenodd"
+                  d="M1065.0,820.0C1059.8,817.2 1057.5,816.8 1052.0,816.0C1046.5,815.2 1039.5,814.2 1032.0,815.0C1024.5,815.8 1014.5,818.3 1007.0,821.0C999.5,823.7 994.2,826.5 987.0,831.0C979.8,835.5 970.8,842.2 964.0,848.0C957.2,853.8 952.3,858.5 946.0,866.0C939.7,873.5 931.5,884.5 926.0,893.0C920.5,901.5 916.7,909.3 913.0,917.0C909.3,924.7 906.7,930.8 904.0,939.0C901.3,947.2 898.5,958.8 897.0,966.0C895.5,973.2 895.2,973.3 895.0,982.0C894.8,990.7 894.8,1008.3 896.0,1018.0C897.2,1027.7 899.3,1033.2 902.0,1040.0C904.7,1046.8 908.2,1053.5 912.0,1059.0C915.8,1064.5 920.0,1069.0 925.0,1073.0C930.0,1077.0 936.0,1080.5 942.0,1083.0C948.0,1085.5 954.2,1087.2 961.0,1088.0C967.8,1088.8 974.5,1089.3 983.0,1088.0C991.5,1086.7 1002.0,1084.5 1012.0,1080.0C1022.0,1075.5 1035.3,1066.7 1043.0,1061.0C1050.7,1055.3 1054.0,1051.0 1058.0,1046.0C1062.0,1041.0 1065.3,1035.5 1067.0,1031.0C1068.7,1026.5 1068.3,1022.0 1068.0,1019.0C1067.7,1016.0 1067.5,1014.7 1065.0,1013.0C1062.5,1011.3 1056.8,1009.0 1053.0,1009.0C1049.2,1009.0 1047.3,1009.7 1042.0,1013.0C1036.7,1016.3 1027.3,1025.0 1021.0,1029.0C1014.7,1033.0 1010.2,1035.5 1004.0,1037.0C997.8,1038.5 990.0,1039.7 984.0,1038.0C978.0,1036.3 972.2,1032.7 968.0,1027.0C963.8,1021.3 960.3,1013.3 959.0,1004.0C957.7,994.7 958.3,982.2 960.0,971.0C961.7,959.8 964.8,948.2 969.0,937.0C973.2,925.8 979.5,913.3 985.0,904.0C990.5,894.7 996.7,887.2 1002.0,881.0C1007.3,874.8 1012.0,870.5 1017.0,867.0C1022.0,863.5 1027.8,860.5 1032.0,860.0C1036.2,859.5 1039.8,862.3 1042.0,864.0C1044.2,865.7 1044.5,867.2 1045.0,870.0C1045.5,872.8 1043.3,877.5 1045.0,881.0C1046.7,884.5 1051.8,889.2 1055.0,891.0C1058.2,892.8 1060.8,892.3 1064.0,892.0C1067.2,891.7 1070.3,891.5 1074.0,889.0C1077.7,886.5 1083.2,881.3 1086.0,877.0C1088.8,872.7 1090.3,868.2 1091.0,863.0C1091.7,857.8 1091.3,851.0 1090.0,846.0C1088.7,841.0 1087.2,837.3 1083.0,833.0C1078.8,828.7 1070.2,822.8 1065.0,820.0Z"
+                />
+
+                {/* Coffee-bean O */}
+                <path
+                  fill="#A77B53"
+                  fillRule="evenodd"
+                  d="M1213.0,865.0C1212.0,863.8 1210.8,862.3 1207.0,864.0C1203.2,865.7 1197.0,868.8 1190.0,875.0C1183.0,881.2 1172.2,892.2 1165.0,901.0C1157.8,909.8 1151.2,921.0 1147.0,928.0C1142.8,935.0 1142.5,935.7 1140.0,943.0C1137.5,950.3 1133.5,963.2 1132.0,972.0C1130.5,980.8 1130.5,989.3 1131.0,996.0C1131.5,1002.7 1133.0,1009.3 1135.0,1012.0C1137.0,1014.7 1139.5,1015.0 1143.0,1012.0C1146.5,1009.0 1152.5,1000.0 1156.0,994.0C1159.5,988.0 1161.3,985.3 1164.0,976.0C1166.7,966.7 1169.7,947.0 1172.0,938.0C1174.3,929.0 1174.3,929.5 1178.0,922.0C1181.7,914.5 1188.2,901.5 1194.0,893.0C1199.8,884.5 1209.8,875.7 1213.0,871.0C1216.2,866.3 1214.0,866.2 1213.0,865.0ZM1273.0,860.0C1270.5,858.3 1265.0,856.8 1259.0,858.0C1253.0,859.2 1242.3,864.3 1237.0,867.0C1231.7,869.7 1232.0,869.3 1227.0,874.0C1222.0,878.7 1214.0,886.2 1207.0,895.0C1200.0,903.8 1190.0,919.0 1185.0,927.0C1180.0,935.0 1180.3,933.5 1177.0,943.0C1173.7,952.5 1171.2,971.0 1165.0,984.0C1158.8,997.0 1143.8,1013.3 1140.0,1021.0C1136.2,1028.7 1141.0,1028.2 1142.0,1030.0C1143.0,1031.8 1143.8,1031.8 1146.0,1032.0C1148.2,1032.2 1150.8,1032.3 1155.0,1031.0C1159.2,1029.7 1166.0,1026.8 1171.0,1024.0C1176.0,1021.2 1179.0,1019.7 1185.0,1014.0C1191.0,1008.3 1200.2,999.5 1207.0,990.0C1213.8,980.5 1221.2,968.5 1226.0,957.0C1230.8,945.5 1232.7,930.5 1236.0,921.0C1239.3,911.5 1242.2,906.5 1246.0,900.0C1249.8,893.5 1254.3,887.3 1259.0,882.0C1263.7,876.7 1271.7,871.7 1274.0,868.0C1276.3,864.3 1275.5,861.7 1273.0,860.0ZM1282.0,874.0C1280.3,870.8 1278.8,871.8 1277.0,872.0C1275.2,872.2 1275.2,870.7 1271.0,875.0C1266.8,879.3 1256.5,891.3 1252.0,898.0C1247.5,904.7 1246.8,905.2 1244.0,915.0C1241.2,924.8 1238.2,945.7 1235.0,957.0C1231.8,968.3 1229.8,974.0 1225.0,983.0C1220.2,992.0 1211.7,1003.8 1206.0,1011.0C1200.3,1018.2 1196.3,1021.7 1191.0,1026.0C1185.7,1030.3 1177.2,1034.0 1174.0,1037.0C1170.8,1040.0 1171.5,1042.5 1172.0,1044.0C1172.5,1045.5 1173.7,1046.2 1177.0,1046.0C1180.3,1045.8 1185.3,1045.7 1192.0,1043.0C1198.7,1040.3 1208.5,1036.0 1217.0,1030.0C1225.5,1024.0 1235.0,1015.7 1243.0,1007.0C1251.0,998.3 1259.2,987.3 1265.0,978.0C1270.8,968.7 1274.3,961.3 1278.0,951.0C1281.7,940.7 1285.5,926.0 1287.0,916.0C1288.5,906.0 1287.8,898.0 1287.0,891.0C1286.2,884.0 1283.7,877.2 1282.0,874.0Z"
+                />
+
+                {/* Letters FF */}
+                <path
+                  fill="#442713"
+                  fillRule="evenodd"
+                  d="M1530.0,819.0C1527.5,816.8 1522.8,814.3 1519.0,813.0C1515.2,811.7 1515.8,811.0 1507.0,811.0C1498.2,811.0 1483.0,810.7 1466.0,813.0C1449.0,815.3 1417.5,822.0 1405.0,825.0C1392.5,828.0 1394.8,828.7 1391.0,831.0C1387.2,833.3 1384.7,835.3 1382.0,839.0C1379.3,842.7 1375.8,847.3 1375.0,853.0C1374.2,858.7 1383.3,844.3 1377.0,873.0C1370.7,901.7 1343.8,996.0 1337.0,1025.0C1330.2,1054.0 1334.8,1041.3 1336.0,1047.0C1337.2,1052.7 1341.0,1056.3 1344.0,1059.0C1347.0,1061.7 1350.7,1062.5 1354.0,1063.0C1357.3,1063.5 1360.7,1063.0 1364.0,1062.0C1367.3,1061.0 1371.2,1059.2 1374.0,1057.0C1376.8,1054.8 1377.7,1055.8 1381.0,1049.0C1384.3,1042.2 1389.3,1030.3 1394.0,1016.0C1398.7,1001.7 1401.2,973.8 1409.0,963.0C1416.8,952.2 1428.8,954.3 1441.0,951.0C1453.2,947.7 1473.0,946.2 1482.0,943.0C1491.0,939.8 1492.8,936.3 1495.0,932.0C1497.2,927.7 1496.2,921.0 1495.0,917.0C1493.8,913.0 1490.2,910.0 1488.0,908.0C1485.8,906.0 1486.8,905.7 1482.0,905.0C1477.2,904.3 1467.7,903.2 1459.0,904.0C1450.3,904.8 1436.0,909.5 1430.0,910.0C1424.0,910.5 1422.5,914.0 1423.0,907.0C1423.5,900.0 1430.0,875.3 1433.0,868.0C1436.0,860.7 1436.0,865.0 1441.0,863.0C1446.0,861.0 1450.8,858.5 1463.0,856.0C1475.2,853.5 1503.7,850.2 1514.0,848.0C1524.3,845.8 1521.7,845.7 1525.0,843.0C1528.3,840.3 1532.5,834.8 1534.0,832.0C1535.5,829.2 1534.7,828.2 1534.0,826.0C1533.3,823.8 1532.5,821.2 1530.0,819.0Z"
+                />
+                <path
+                  fill="#442713"
+                  fillRule="evenodd"
+                  d="M1694.0,809.0C1691.5,806.8 1689.5,806.0 1686.0,805.0C1682.5,804.0 1685.7,802.3 1673.0,803.0C1660.3,803.7 1629.2,805.8 1610.0,809.0C1590.8,812.2 1568.8,818.0 1558.0,822.0C1547.2,826.0 1548.2,829.0 1545.0,833.0C1541.8,837.0 1539.7,840.7 1539.0,846.0C1538.3,851.3 1544.0,849.8 1541.0,865.0C1538.0,880.2 1527.8,910.5 1521.0,937.0C1514.2,963.5 1503.7,1005.5 1500.0,1024.0C1496.3,1042.5 1497.7,1041.8 1499.0,1048.0C1500.3,1054.2 1505.2,1058.3 1508.0,1061.0C1510.8,1063.7 1512.7,1063.7 1516.0,1064.0C1519.3,1064.3 1524.5,1064.0 1528.0,1063.0C1531.5,1062.0 1534.0,1060.7 1537.0,1058.0C1540.0,1055.3 1542.5,1054.2 1546.0,1047.0C1549.5,1039.8 1554.0,1028.3 1558.0,1015.0C1562.0,1001.7 1567.2,976.2 1570.0,967.0C1572.8,957.8 1568.0,963.3 1575.0,960.0C1582.0,956.7 1600.3,950.2 1612.0,947.0C1623.7,943.8 1637.0,943.5 1645.0,941.0C1653.0,938.5 1657.0,934.7 1660.0,932.0C1663.0,929.3 1662.7,928.0 1663.0,925.0C1663.3,922.0 1662.7,916.8 1662.0,914.0C1661.3,911.2 1661.2,910.2 1659.0,908.0C1656.8,905.8 1655.0,902.3 1649.0,901.0C1643.0,899.7 1633.0,899.3 1623.0,900.0C1613.0,900.7 1595.0,905.2 1589.0,905.0C1583.0,904.8 1585.7,905.8 1587.0,899.0C1588.3,892.2 1594.0,870.8 1597.0,864.0C1600.0,857.2 1598.0,860.7 1605.0,858.0C1612.0,855.3 1626.2,850.8 1639.0,848.0C1651.8,845.2 1673.2,843.0 1682.0,841.0C1690.8,839.0 1688.8,838.7 1692.0,836.0C1695.2,833.3 1699.5,828.0 1701.0,825.0C1702.5,822.0 1702.2,820.7 1701.0,818.0C1699.8,815.3 1696.5,811.2 1694.0,809.0Z"
+                />
+
+                {/* Swoosh underline */}
+                <path
+                  fill="#442713"
+                  fillRule="evenodd"
+                  d="M1606.0,1144.0C1604.5,1141.0 1602.0,1136.7 1595.0,1133.0C1588.0,1129.3 1578.8,1125.8 1564.0,1122.0C1549.2,1118.2 1526.3,1113.3 1506.0,1110.0C1485.7,1106.7 1468.2,1104.2 1442.0,1102.0C1415.8,1099.8 1382.3,1097.8 1349.0,1097.0C1315.7,1096.2 1280.2,1096.0 1242.0,1097.0C1203.8,1098.0 1167.5,1098.8 1120.0,1103.0C1072.5,1107.2 1013.8,1113.2 957.0,1122.0C900.2,1130.8 824.0,1146.5 779.0,1156.0C734.0,1165.5 714.8,1171.5 687.0,1179.0C659.2,1186.5 635.2,1193.7 612.0,1201.0C588.8,1208.3 559.7,1218.7 548.0,1223.0C536.3,1227.3 543.3,1225.0 542.0,1227.0C540.7,1229.0 539.0,1232.7 540.0,1235.0C541.0,1237.3 539.0,1240.3 548.0,1241.0C557.0,1241.7 552.7,1247.5 594.0,1239.0C635.3,1230.5 744.3,1202.0 796.0,1190.0C847.7,1178.0 865.2,1174.3 904.0,1167.0C942.8,1159.7 991.5,1151.5 1029.0,1146.0C1066.5,1140.5 1091.3,1137.3 1129.0,1134.0C1166.7,1130.7 1213.8,1127.3 1255.0,1126.0C1296.2,1124.7 1337.8,1124.7 1376.0,1126.0C1414.2,1127.3 1447.8,1129.5 1484.0,1134.0C1520.2,1138.5 1573.0,1150.2 1593.0,1153.0C1613.0,1155.8 1601.8,1152.5 1604.0,1151.0C1606.2,1149.5 1607.5,1147.0 1606.0,1144.0Z"
+                />
+
+                {/* Bean icons */}
+                <path
+                  fill="#442713"
+                  fillRule="evenodd"
+                  d="M888.0,1378.0C886.0,1376.8 879.7,1375.8 876.0,1376.0C872.3,1376.2 869.8,1377.2 866.0,1379.0C862.2,1380.8 857.0,1383.7 853.0,1387.0C849.0,1390.3 845.5,1393.2 842.0,1399.0C838.5,1404.8 833.7,1415.3 832.0,1422.0C830.3,1428.7 831.0,1434.2 832.0,1439.0C833.0,1443.8 835.8,1449.0 838.0,1451.0C840.2,1453.0 842.2,1452.8 845.0,1451.0C847.8,1449.2 851.7,1444.8 855.0,1440.0C858.3,1435.2 862.3,1428.3 865.0,1422.0C867.7,1415.7 867.2,1408.5 871.0,1402.0C874.8,1395.5 885.2,1387.0 888.0,1383.0C890.8,1379.0 890.0,1379.2 888.0,1378.0ZM897.0,1385.0C895.0,1383.2 895.2,1383.2 892.0,1386.0C888.8,1388.8 882.5,1393.7 878.0,1402.0C873.5,1410.3 869.8,1427.2 865.0,1436.0C860.2,1444.8 851.3,1451.2 849.0,1455.0C846.7,1458.8 848.8,1458.2 851.0,1459.0C853.2,1459.8 858.2,1460.5 862.0,1460.0C865.8,1459.5 870.0,1458.2 874.0,1456.0C878.0,1453.8 882.2,1450.8 886.0,1447.0C889.8,1443.2 894.0,1438.5 897.0,1433.0C900.0,1427.5 902.8,1420.0 904.0,1414.0C905.2,1408.0 905.2,1401.8 904.0,1397.0C902.8,1392.2 899.0,1386.8 897.0,1385.0Z"
+                />
+                <path
+                  fill="#A77B53"
+                  fillRule="evenodd"
+                  d="M1021.0,1374.0C1017.3,1373.7 1010.2,1373.5 1005.0,1375.0C999.8,1376.5 994.7,1379.5 990.0,1383.0C985.3,1386.5 980.7,1391.2 977.0,1396.0C973.3,1400.8 970.0,1407.2 968.0,1412.0C966.0,1416.8 965.2,1419.5 965.0,1425.0C964.8,1430.5 965.8,1440.3 967.0,1445.0C968.2,1449.7 969.8,1451.5 972.0,1453.0C974.2,1454.5 978.3,1453.0 980.0,1454.0C981.7,1455.0 980.8,1457.7 982.0,1459.0C983.2,1460.3 983.8,1461.5 987.0,1462.0C990.2,1462.5 996.3,1463.0 1001.0,1462.0C1005.7,1461.0 1010.3,1459.0 1015.0,1456.0C1019.7,1453.0 1025.0,1448.7 1029.0,1444.0C1033.0,1439.3 1036.7,1433.2 1039.0,1428.0C1041.3,1422.8 1042.5,1418.8 1043.0,1413.0C1043.5,1407.2 1043.0,1397.8 1042.0,1393.0C1041.0,1388.2 1039.2,1385.7 1037.0,1384.0C1034.8,1382.3 1030.7,1384.2 1029.0,1383.0C1027.3,1381.8 1028.3,1378.5 1027.0,1377.0C1025.7,1375.5 1024.7,1374.3 1021.0,1374.0Z"
+                />
+                <path
+                  fill="#A26836"
+                  fillRule="evenodd"
+                  d="M1157.0,1375.0C1154.3,1374.5 1151.2,1373.3 1146.0,1375.0C1140.8,1376.7 1131.2,1381.5 1126.0,1385.0C1120.8,1388.5 1118.2,1391.8 1115.0,1396.0C1111.8,1400.2 1109.0,1405.3 1107.0,1410.0C1105.0,1414.7 1103.5,1418.5 1103.0,1424.0C1102.5,1429.5 1103.0,1438.3 1104.0,1443.0C1105.0,1447.7 1107.2,1450.2 1109.0,1452.0C1110.8,1453.8 1113.2,1454.2 1115.0,1454.0C1116.8,1453.8 1119.2,1450.3 1120.0,1451.0C1120.8,1451.7 1119.3,1456.3 1120.0,1458.0C1120.7,1459.7 1120.8,1460.5 1124.0,1461.0C1127.2,1461.5 1133.7,1462.5 1139.0,1461.0C1144.3,1459.5 1151.0,1455.8 1156.0,1452.0C1161.0,1448.2 1165.7,1442.7 1169.0,1438.0C1172.3,1433.3 1174.3,1428.3 1176.0,1424.0C1177.7,1419.7 1178.8,1417.5 1179.0,1412.0C1179.2,1406.5 1178.7,1395.8 1177.0,1391.0C1175.3,1386.2 1171.5,1383.8 1169.0,1383.0C1166.5,1382.2 1163.2,1386.8 1162.0,1386.0C1160.8,1385.2 1162.8,1379.8 1162.0,1378.0C1161.2,1376.2 1159.7,1375.5 1157.0,1375.0ZM1150.0,1397.0C1149.5,1400.3 1144.2,1419.5 1140.0,1428.0C1135.8,1436.5 1127.7,1445.0 1125.0,1448.0C1122.3,1451.0 1121.7,1450.0 1124.0,1446.0C1126.3,1442.0 1135.8,1430.3 1139.0,1424.0C1142.2,1417.7 1141.2,1412.5 1143.0,1408.0C1144.8,1403.5 1150.5,1393.7 1150.0,1397.0Z"
+                />
+
+                {/* Subtitle */}
+                <text
+                  x="1014"
+                  y="1328"
+                  textAnchor="middle"
+                  textLength="1110"
+                  lengthAdjust="spacing"
+                  fill="#442713"
+                  fontSize="52"
+                  fontFamily="'Plus Jakarta Sans', system-ui, sans-serif"
+                  fontWeight="600"
+                >
+                  SELF SERVICE COFFEE KIOSK
+                </text>
+              </svg>
+
+              {/* Clean Drink Spec Printed on Cup Front */}
+              <text
+                x="180"
+                y="256"
+                textAnchor="middle"
+                fill="#442713"
+                fontSize="9"
+                fontWeight="700"
+                letterSpacing="1.4"
+                fontFamily="'Plus Jakarta Sans', system-ui, sans-serif"
+              >
+                {order.drinkName.toUpperCase()}
+              </text>
+
+              <text
+                x="180"
+                y="272"
+                textAnchor="middle"
+                fill="#8C6E53"
+                fontSize="7.5"
+                fontWeight="600"
+                letterSpacing="0.8"
+                fontFamily="'Plus Jakarta Sans', system-ui, sans-serif"
+              >
+                100% HIGHLAND ARABICA · {volumeMl} ML
+              </text>
             </g>
 
-            {/* Drink Subtitle / Spec Line on Cup Front */}
-            <text
-              x="170"
-              y="266"
-              textAnchor="middle"
-              fill="#8B6B4D"
-              fontSize="9"
-              fontWeight="600"
-              letterSpacing="1.5"
-              fontFamily="system-ui, sans-serif"
-            >
-              {order.drinkName.toUpperCase()}
-            </text>
-
-            <text
-              x="170"
-              y="280"
-              textAnchor="middle"
-              fill="#A99583"
-              fontSize="7.5"
-              fontWeight="500"
-              letterSpacing="0.8"
-              fontFamily="system-ui, sans-serif"
-            >
-              {volumeMl} ML · AIRPOT EXTRACTED
-            </text>
-
-            {/* Cup Bottom Rolled Base Lip */}
-            <path
-              d="M112 334 Q170 344 228 334 L226 339 Q170 348 114 339 Z"
-              fill="#D9D3C7"
+            {/* 2D Rolled Top Paper Rim Lip (Pure white paper rim matching photo) */}
+            <rect
+              x="96"
+              y="98"
+              width="168"
+              height="12"
+              rx="6"
+              fill="#FFFFFF"
+              stroke="#D8CFBF"
+              strokeWidth="1.2"
+            />
+            {/* Top opening dark espresso slot */}
+            <rect
+              x="104"
+              y="102"
+              width="152"
+              height="4"
+              rx="2"
+              fill="#24130A"
             />
           </g>
 
-          {/* ── 3. Flowing Coffee Stream (In Front of Cup Rim, Into Liquid) ── */}
+          {/* ═════════════════════════════════════════════════════
+              3. 2D LAMINAR COFFEE STREAM (Vertical, Crisp & Clean)
+          ═════════════════════════════════════════════════════ */}
           {isPouringActive && (
-            <g id="activePouringStream">
-              {/* Outer rich dark stream with natural gravity curve */}
-              <path
-                d={`M166 52 Q169 110 167 190 Q165 240 168 ${Math.max(140, liquidTopY)}`}
-                stroke="url(#streamBodyGrad)"
+            <g id="laminarCoffeeStream2D">
+              {/* Outer rich dark stream core */}
+              <line
+                x1="180"
+                y1="40"
+                x2="180"
+                y2={Math.max(106, liquidY)}
+                stroke="url(#streamGrad2D)"
                 strokeWidth="6"
                 strokeLinecap="round"
-                fill="none"
               />
 
-              {/* Inner glowing amber fluid highlight */}
-              <path
-                d={`M168 52 Q171 110 169 190 Q167 240 170 ${Math.max(140, liquidTopY)}`}
-                stroke="url(#shimmerGrad)"
-                strokeWidth="2.4"
+              {/* Inner animated flowing fluid highlight */}
+              <line
+                x1="180"
+                y1="40"
+                x2="180"
+                y2={Math.max(106, liquidY)}
+                stroke="#E5B984"
+                strokeWidth="2.2"
                 strokeLinecap="round"
-                strokeDasharray="16 8"
-                fill="none"
+                strokeDasharray="12 8"
               >
                 <animate
                   attributeName="stroke-dashoffset"
-                  values="0;-48"
-                  dur="0.4s"
+                  values="0;-40"
+                  dur="0.35s"
                   repeatCount="indefinite"
                 />
-              </path>
+              </line>
 
-              {/* Sparkling fine light beam */}
-              <path
-                d={`M170 52 Q172 110 170.5 190 Q168.5 240 171 ${Math.max(140, liquidTopY)}`}
+              {/* Sparkling fine light beam inside stream */}
+              <line
+                x1="180.5"
+                y1="42"
+                x2="180.5"
+                y2={Math.max(106, liquidY - 2)}
                 stroke="#FFFFFF"
                 strokeWidth="0.8"
-                strokeOpacity="0.75"
-                fill="none"
+                strokeOpacity="0.8"
               />
 
-              {/* Energetic splashing droplets at stream landing point */}
-              <g id="splashDroplets">
-                {/* Droplet 1 (Left arching) */}
-                <circle cx="163" cy={liquidTopY - 4} r="2.2" fill="#E5B582">
-                  <animate attributeName="cx" values="163;156;153" dur="0.32s" repeatCount="indefinite" />
-                  <animate attributeName="cy" values={`${liquidTopY - 2};${liquidTopY - 14};${liquidTopY - 2}`} dur="0.32s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0.9;0.7;0" dur="0.32s" repeatCount="indefinite" />
-                </circle>
-
-                {/* Droplet 2 (Right arching) */}
-                <circle cx="174" cy={liquidTopY - 3} r="1.9" fill="#FCE4C8">
-                  <animate attributeName="cx" values="174;182;186" dur="0.28s" repeatCount="indefinite" />
-                  <animate attributeName="cy" values={`${liquidTopY - 2};${liquidTopY - 12};${liquidTopY - 1}`} dur="0.28s" repeatCount="indefinite" />
+              {/* 2D Impact Splash Droplets leaping from contact point */}
+              <g id="splashDroplets2D">
+                {/* Left arching drop */}
+                <circle cx="174" cy={liquidY - 4} r="2" fill="#E5B984">
+                  <animate attributeName="cx" values="174;166;162" dur="0.28s" repeatCount="indefinite" />
+                  <animate attributeName="cy" values={`${liquidY};${liquidY - 12};${liquidY}`} dur="0.28s" repeatCount="indefinite" />
                   <animate attributeName="opacity" values="0.9;0.6;0" dur="0.28s" repeatCount="indefinite" />
                 </circle>
 
-                {/* Droplet 3 (High bounce center) */}
-                <circle cx="169" cy={liquidTopY - 5} r="2" fill="#D49964">
-                  <animate attributeName="cy" values={`${liquidTopY - 3};${liquidTopY - 18};${liquidTopY - 4}`} dur="0.25s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0.95;0.8;0" dur="0.25s" repeatCount="indefinite" />
+                {/* Right arching drop */}
+                <circle cx="186" cy={liquidY - 4} r="1.8" fill="#FCE4C8">
+                  <animate attributeName="cx" values="186;194;198" dur="0.25s" repeatCount="indefinite" />
+                  <animate attributeName="cy" values={`${liquidY};${liquidY - 10};${liquidY}`} dur="0.25s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.9;0.5;0" dur="0.25s" repeatCount="indefinite" />
                 </circle>
 
-                {/* Droplet 4 (Fine mist micro-drop) */}
-                <circle cx="176" cy={liquidTopY - 6} r="1.4" fill="#FFFFFF">
-                  <animate attributeName="cx" values="176;184;188" dur="0.35s" repeatCount="indefinite" />
-                  <animate attributeName="cy" values={`${liquidTopY - 4};${liquidTopY - 16};${liquidTopY - 2}`} dur="0.35s" repeatCount="indefinite" />
-                  <animate attributeName="opacity" values="0.8;0.3;0" dur="0.35s" repeatCount="indefinite" />
+                {/* Center micro drop */}
+                <circle cx="180" cy={liquidY - 5} r="1.6" fill="#FFFFFF">
+                  <animate attributeName="cy" values={`${liquidY};${liquidY - 16};${liquidY - 2}`} dur="0.22s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.95;0.7;0" dur="0.22s" repeatCount="indefinite" />
                 </circle>
               </g>
             </g>
           )}
 
-          {/* ── 4. Multi-Layer Realistic Rising Steam Wisps ── */}
-          <g id="risingCoffeeSteam" opacity="0.75" filter="url(#softSteamBlur)">
-            {/* Steam trail 1 */}
+          {/* ═════════════════════════════════════════════════════
+              4. 2D RISING COFFEE STEAM (Gentle Curving Wisps)
+          ═════════════════════════════════════════════════════ */}
+          <g id="risingSteamWisps2D" opacity="0.65">
+            {/* Trail 1: Left subtle waft */}
             <path
-              d="M148 116 Q140 82 150 56 T144 20"
+              d="M154 94 Q146 64 156 42 T150 16"
               fill="none"
-              stroke="#E8E2D6"
-              strokeWidth="4.5"
+              stroke="#A5754A"
+              strokeWidth="2.5"
               strokeLinecap="round"
             >
               <animate
                 attributeName="d"
-                values="M148 116 Q140 82 150 56 T144 20; M148 116 Q154 82 144 56 T150 20; M148 116 Q140 82 150 56 T144 20"
+                values="M154 94 Q146 64 156 42 T150 16; M154 94 Q160 64 148 42 T154 16; M154 94 Q146 64 156 42 T150 16"
+                dur="2.8s"
+                repeatCount="indefinite"
+              />
+              <animate attributeName="opacity" values="0.15;0.55;0.15" dur="2.8s" repeatCount="indefinite" />
+            </path>
+
+            {/* Trail 2: Right smooth drift */}
+            <path
+              d="M206 94 Q214 62 202 38 T208 14"
+              fill="none"
+              stroke="#A5754A"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
+              <animate
+                attributeName="d"
+                values="M206 94 Q214 62 202 38 T208 14; M206 94 Q198 62 210 38 T204 14; M206 94 Q214 62 202 38 T208 14"
+                dur="2.4s"
+                repeatCount="indefinite"
+              />
+              <animate attributeName="opacity" values="0.2;0.6;0.2" dur="2.4s" repeatCount="indefinite" />
+            </path>
+
+            {/* Trail 3: Center delicate stream */}
+            <path
+              d="M180 94 Q174 68 184 46 T178 20"
+              fill="none"
+              stroke="#644B37"
+              strokeWidth="2"
+              strokeLinecap="round"
+            >
+              <animate
+                attributeName="d"
+                values="M180 94 Q174 68 184 46 T178 20; M180 94 Q186 68 176 46 T182 20; M180 94 Q174 68 184 46 T178 20"
                 dur="3.2s"
                 repeatCount="indefinite"
               />
-              <animate attributeName="opacity" values="0.2;0.7;0.2" dur="3.2s" repeatCount="indefinite" />
-            </path>
-
-            {/* Steam trail 2 */}
-            <path
-              d="M186 112 Q194 78 182 50 T188 18"
-              fill="none"
-              stroke="#FAF7F2"
-              strokeWidth="4"
-              strokeLinecap="round"
-            >
-              <animate
-                attributeName="d"
-                values="M186 112 Q194 78 182 50 T188 18; M186 112 Q178 78 190 50 T180 18; M186 112 Q194 78 182 50 T188 18"
-                dur="2.7s"
-                repeatCount="indefinite"
-              />
-              <animate attributeName="opacity" values="0.3;0.8;0.3" dur="2.7s" repeatCount="indefinite" />
-            </path>
-
-            {/* Steam trail 3 (Center subtle waft) */}
-            <path
-              d="M168 118 Q162 88 172 60 T164 26"
-              fill="none"
-              stroke="#DDD6CA"
-              strokeWidth="3.2"
-              strokeLinecap="round"
-            >
-              <animate
-                attributeName="d"
-                values="M168 118 Q162 88 172 60 T164 26; M168 118 Q174 88 162 60 T170 26; M168 118 Q162 88 172 60 T164 26"
-                dur="3.8s"
-                repeatCount="indefinite"
-              />
-              <animate attributeName="opacity" values="0.2;0.65;0.2" dur="3.8s" repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.15;0.5;0.15" dur="3.2s" repeatCount="indefinite" />
             </path>
           </g>
         </svg>
@@ -523,23 +593,26 @@ export const CoffeeBrewingPourAnimation: React.FC<CoffeeBrewingPourAnimationProp
         <div className="absolute bottom-4 right-4 bg-white/95 backdrop-blur-xs px-3.5 py-1.5 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.08)] flex items-center gap-2 z-10">
           <div className="w-2.5 h-2.5 rounded-full bg-[#A5754A] animate-ping" />
           <span className="font-sans text-xs font-bold text-[#442713] tabular-nums">
-            {currentMl} ml · {progressPercent}%
+            {currentMl} ml · {Math.round(progressPercent)}%
           </span>
         </div>
 
-        {/* Live Servo Pulse Status on Bottom Left */}
+        {/* Live Seconds Countdown on Bottom Left (NO SERVO, STRICTLY IN SECONDS) */}
         <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-xs px-3 py-1.5 rounded-full shadow-[0_4px_14px_rgba(0,0,0,0.08)] flex items-center gap-1.5 z-10 text-[11px] font-semibold text-[#644B37]">
-          <span>Airpot Servo</span>
-          <span className="text-[#A5754A] font-mono tabular-nums">#{currentPress}/{order.presses}</span>
+          <Clock className="w-3.5 h-3.5 text-[#A5754A]" />
+          <span>Dispense Time</span>
+          <span className="text-[#A5754A] font-mono tabular-nums font-bold">
+            {elapsedSec.toFixed(1)}s / {pourDuration.toFixed(1)}s
+          </span>
         </div>
       </div>
 
       {/* Progress bar and details */}
-      <div className="w-full max-w-md mt-5 space-y-2.5">
+      <div className="w-full max-w-md mt-4 space-y-2">
         {/* Animated Fill Bar */}
         <div className="w-full bg-[#E8DEC8]/80 rounded-full h-3 overflow-hidden p-0.5 shadow-inner">
           <div
-            className="h-full bg-gradient-to-r from-[#A5754A] via-[#C4966A] to-[#442713] rounded-full transition-all duration-300 ease-out relative overflow-hidden"
+            className="h-full bg-gradient-to-r from-[#A5754A] via-[#C4966A] to-[#442713] rounded-full transition-all duration-150 ease-out relative overflow-hidden"
             style={{ width: `${progressPercent}%` }}
           >
             {/* Shimmer light traversing progress bar */}
@@ -555,7 +628,7 @@ export const CoffeeBrewingPourAnimation: React.FC<CoffeeBrewingPourAnimationProp
             Slot {order.slot} · {order.drinkName}
           </span>
           <span className="font-sans font-medium tabular-nums text-[#644B37]">
-            {currentMl} of {volumeMl} ml dispensed
+            {currentMl} of {volumeMl} ml dispensed · {remainingSec > 0 ? `${remainingSec.toFixed(1)}s left` : 'Finished'}
           </span>
         </div>
       </div>

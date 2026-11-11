@@ -10,6 +10,7 @@ export interface Order {
   slot: number;
   line: number;
   pourSeconds: number;
+  presses?: number;
   price: number;
   status: OrderStatus;
   createdAt: string;

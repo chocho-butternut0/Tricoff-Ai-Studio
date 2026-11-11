@@ -144,7 +144,7 @@ export const QrPhMatrix: React.FC<QrPhMatrixProps> = ({
               Electronic Fund Transfer QR
             </span>
           </div>
-          <span className="font-mono text-xs font-semibold text-stone-900 tabular-nums">
+          <span className="font-money text-xs font-semibold text-stone-900 tabular-nums">
             ₱{amount.toFixed(2)}
           </span>
         </div>
@@ -196,7 +196,7 @@ export const QrPhMatrix: React.FC<QrPhMatrixProps> = ({
               <p className="text-xs font-semibold text-white">
                 Verifying InstaPay Payment...
               </p>
-              <p className="font-mono text-[11px] text-stone-300 mt-0.5 tabular-nums">
+              <p className="font-money text-[11px] text-stone-300 mt-0.5 tabular-nums">
                 ₱{amount.toFixed(2)} · {referenceId}
               </p>
             </div>
@@ -211,7 +211,7 @@ export const QrPhMatrix: React.FC<QrPhMatrixProps> = ({
               <p className="text-xs font-semibold tracking-wide text-emerald-200">
                 InstaPay Payment Verified
               </p>
-              <p className="font-mono text-xs text-white mt-0.5 tabular-nums">
+              <p className="font-money text-xs text-white mt-0.5 tabular-nums">
                 ₱{amount.toFixed(2)} Settled
               </p>
             </div>
@@ -242,7 +242,7 @@ export const QrPhMatrix: React.FC<QrPhMatrixProps> = ({
             National QR Standard
           </span>
         </div>
-        <span className="font-mono text-xs font-semibold text-stone-900 tabular-nums">
+        <span className="font-money text-xs font-semibold text-stone-900 tabular-nums">
           ₱{amount.toFixed(2)}
         </span>
       </div>
@@ -308,7 +308,7 @@ export const QrPhMatrix: React.FC<QrPhMatrixProps> = ({
             <p className="text-xs font-semibold tracking-wide text-emerald-200">
               QRPh Payment Verified
             </p>
-            <p className="font-mono text-xs text-white mt-0.5 tabular-nums">
+            <p className="font-money text-xs text-white mt-0.5 tabular-nums">
               ₱{amount.toFixed(2)} Settled
             </p>
           </div>

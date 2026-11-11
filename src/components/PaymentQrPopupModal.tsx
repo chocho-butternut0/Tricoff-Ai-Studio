@@ -34,7 +34,7 @@ export const PaymentQrPopupModal: React.FC<PaymentQrPopupModalProps> = ({
       <div className="w-full max-w-[340px] sm:max-w-[360px] rounded-[26px] sm:rounded-[30px] bg-[#FAF7F2] text-[#442713] shadow-[0_20px_50px_rgba(0,0,0,0.22)] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-200">
         
         {/* ── Top Bar with Back and Cancel ── */}
-        <div className="px-4 py-2 sm:px-5 sm:py-2.5 bg-[#F2ECE2] flex items-center justify-between">
+        <div className="px-4 py-2 sm:px-5 sm:py-2.5 bg-[#FAF7F2] flex items-center justify-between">
           <button
             type="button"
             onClick={onBack}
@@ -59,30 +59,7 @@ export const PaymentQrPopupModal: React.FC<PaymentQrPopupModalProps> = ({
           
           {/* Step 3 Badge */}
           <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white text-[#644B37] text-[11px] font-semibold shadow-2xs mb-1.5">
-            <span>Step 3 · Scan to Pay</span>
-          </div>
-
-          {/* Rail Identity Badge */}
-          <div className="mb-1">
-            {isQrPh ? (
-              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-blue-50 text-blue-900 shadow-2xs">
-                <span className="font-extrabold text-[11px] tracking-wider">
-                  <span className="text-[#0038A8]">QR</span>
-                  <span className="text-[#CE1126]">Ph</span>
-                </span>
-                <span className="text-stone-300">·</span>
-                <span className="text-[11px] font-medium text-[#442713]">National QR</span>
-              </div>
-            ) : (
-              <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-red-50 text-red-900 shadow-2xs">
-                <span className="font-extrabold text-[11px] tracking-wider">
-                  <span className="text-[#00529B]">insta</span>
-                  <span className="text-[#E11931]">Pay</span>
-                </span>
-                <span className="text-stone-300">·</span>
-                <span className="text-[11px] font-medium text-[#442713]">Interbank QR</span>
-              </div>
-            )}
+            <span>Step 3</span>
           </div>
 
           {/* Specific Instruction */}
@@ -92,12 +69,12 @@ export const PaymentQrPopupModal: React.FC<PaymentQrPopupModalProps> = ({
               : 'Scan using your supported banking app.'}
           </p>
 
-          {/* Amount Badge (clean, transparent background seamlessly on card) */}
-          <div className="my-1.5 flex items-baseline justify-center gap-1.5">
+          {/* Amount Badge (price below label) */}
+          <div className="my-1.5 flex flex-col items-center justify-center">
             <span className="text-[11px] uppercase tracking-wider font-semibold text-[#644B37]">
-              Total Amount:
+              Total Amount
             </span>
-            <span className="font-sans text-2xl sm:text-[26px] font-extrabold text-[#442713] tabular-nums">
+            <span className="font-money text-2xl sm:text-3xl font-extrabold text-[#442713] tabular-nums leading-tight">
               ₱{order.price}.00
             </span>
           </div>
@@ -120,8 +97,31 @@ export const PaymentQrPopupModal: React.FC<PaymentQrPopupModalProps> = ({
             </div>
           </a>
 
+          {/* QRPh / InstaPay Badge placed BELOW the QR code */}
+          <div className="mt-2.5 mb-0.5">
+            {isQrPh ? (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 shadow-2xs">
+                <span className="font-extrabold text-xs tracking-wider">
+                  <span className="text-[#0038A8]">QR</span>
+                  <span className="text-[#CE1126]">Ph</span>
+                </span>
+                <span className="text-stone-300">·</span>
+                <span className="text-[11px] font-semibold text-[#442713]">National QR</span>
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 shadow-2xs">
+                <span className="font-extrabold text-xs tracking-wider">
+                  <span className="text-[#00529B]">insta</span>
+                  <span className="text-[#E11931]">Pay</span>
+                </span>
+                <span className="text-stone-300">·</span>
+                <span className="text-[11px] font-semibold text-[#442713]">Interbank QR</span>
+              </div>
+            )}
+          </div>
+
           {/* ── Waiting for Payment Status ── */}
-          <div className="mt-2.5 flex items-center justify-center gap-2 text-[#442713] text-xs font-medium">
+          <div className="mt-2 flex items-center justify-center gap-2 text-[#442713] text-xs font-medium">
             <Loader2 className="w-3.5 h-3.5 text-[#A5754A] animate-spin" />
             <span className="font-semibold">Waiting for payment…</span>
           </div>
