@@ -56,28 +56,33 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ── Admin panel surfaces (aligned with coffee theme) ───────────────── */
+/* ── Admin panel surfaces (white background & cream cards #FAF7F2) ── */
 @layer components {
   .admin-page {
-    @apply bg-[#FAF7F2] text-[#442713] dark:bg-[#0E0C0B] dark:text-[#FBF9F5];
+    @apply bg-white text-[#442713]
+           dark:bg-[#0E0C0B] dark:text-[#FBF9F5];
   }
   .admin-header {
-    @apply bg-white border-b border-[#E8DEC8]/80 dark:bg-[#120F0D] dark:border-stone-800/80;
+    @apply bg-white/95 backdrop-blur-md shadow-xs
+           dark:bg-[#120F0D]/95;
   }
   .admin-card {
-    @apply bg-white border border-[#E8DEC8]/70 rounded-2xl dark:bg-[#181412] dark:border-stone-800;
+    @apply bg-[#FAF7F2] shadow-[0_10px_25px_rgba(0,0,0,0.06),0_2px_8px_rgba(0,0,0,0.03)]
+           rounded-[24px]
+           dark:bg-[#181412];
   }
   .admin-inset {
-    @apply bg-[#F6F1EA] border border-[#E8DEC8]/60 dark:bg-[#120F0D] dark:border-stone-800;
+    @apply bg-white shadow-2xs rounded-2xl
+           dark:bg-white/[0.05];
   }
   .admin-input {
-    @apply bg-white border border-[#D5C2B0] text-[#442713] placeholder:text-stone-400
-           focus:outline-none focus:border-[#A5754A] transition-colors
-           dark:bg-[#120F0D] dark:border-stone-700 dark:text-stone-100 dark:placeholder:text-stone-600;
+    @apply bg-white text-[#442713] placeholder:text-stone-400
+           focus:outline-none focus:ring-2 focus:ring-[#A5754A]/40 transition-all rounded-xl shadow-2xs
+           dark:bg-white/[0.08] dark:text-stone-100 dark:placeholder:text-stone-500;
   }
   .admin-btn-secondary {
-    @apply bg-[#EFE6DC] hover:bg-[#E4D7C8] text-[#442713] transition-colors cursor-pointer
-           dark:bg-stone-800 dark:hover:bg-stone-700 dark:text-stone-300;
+    @apply bg-white hover:bg-[#F2ECE2] text-[#442713] shadow-2xs transition-all cursor-pointer rounded-xl
+           dark:bg-stone-800 dark:hover:bg-stone-700 dark:text-stone-200;
   }
   .admin-tab-active {
     @apply bg-[#442713] text-white shadow-sm dark:bg-[#A5754A] dark:text-white;

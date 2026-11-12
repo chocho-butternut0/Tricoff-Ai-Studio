@@ -9,11 +9,7 @@ import {
   CheckCircle2,
   XCircle,
   Clock,
-  TrendingUp,
-  ShoppingBag,
-  PhilippinePeso,
   Cpu,
-  ChevronRight,
   Search,
   Sliders,
   Play,
@@ -63,38 +59,201 @@ function StatusBadge({ status }: { status: Order['status'] }) {
   const map: Record<Order['status'], { label: string; cls: string; dot: string }> = {
     created: {
       label: 'Waiting Payment',
-      cls: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20',
+      cls: 'bg-amber-500/15 text-amber-800 dark:text-amber-300',
       dot: 'bg-amber-500',
     },
     paid: {
       label: 'Payment Verified',
-      cls: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20',
+      cls: 'bg-blue-500/15 text-blue-800 dark:text-blue-300',
       dot: 'bg-blue-500',
     },
     pouring: {
       label: 'Dispensing Coffee',
-      cls: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/20 animate-pulse',
+      cls: 'bg-purple-500/15 text-purple-800 dark:text-purple-300 animate-pulse',
       dot: 'bg-purple-500 animate-ping',
     },
     done: {
       label: 'Fulfilled',
-      cls: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20',
+      cls: 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300',
       dot: 'bg-emerald-500',
     },
     failed: {
       label: 'Cancelled / Failed',
-      cls: 'bg-red-500/10 text-red-700 dark:text-red-300 border-red-500/20',
+      cls: 'bg-red-500/15 text-red-800 dark:text-red-300',
       dot: 'bg-red-500',
     },
   };
   const config = map[status] ?? map.created;
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${config.cls}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold shadow-2xs ${config.cls}`}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
       <span>{config.label}</span>
     </span>
+  );
+}
+
+// ── Custom Artisanal SVG Symbols for Today's Performance ────────────
+
+function RevenueMetricSvg({ className = 'w-6 h-6' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 28 28" fill="none" className={className} aria-label="Revenue Icon">
+      <defs>
+        <linearGradient id="kpiRevGrad" x1="2" y1="2" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#C4915C" />
+          <stop offset="60%" stopColor="#A5754A" />
+          <stop offset="100%" stopColor="#644B37" />
+        </linearGradient>
+      </defs>
+      {/* Outer Coin Rim with Subtle Milled Marks */}
+      <circle cx="14" cy="14" r="12" fill="#A5754A" fillOpacity="0.1" />
+      <circle cx="14" cy="14" r="11.5" stroke="url(#kpiRevGrad)" strokeWidth="1.8" />
+      <circle cx="14" cy="14" r="9" stroke="#C4915C" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="1.5 2" />
+      {/* Authentic Philippine Peso Glyph with Double Crossbar */}
+      <path
+        d="M10.5 7.5h5a3.5 3.5 0 0 1 0 7h-5V20.5"
+        stroke="url(#kpiRevGrad)"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M8.5 10h7.5M8.5 12.2h7.5"
+        stroke="url(#kpiRevGrad)"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+      {/* Radiant Gleam Sparkle */}
+      <path
+        d="M20 5.5v3M18.5 7h3"
+        stroke="#C4915C"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function OrdersMetricSvg({ className = 'w-6 h-6' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 28 28" fill="none" className={className} aria-label="Orders Icon">
+      <defs>
+        <linearGradient id="kpiOrderGrad" x1="3" y1="3" x2="25" y2="25" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#60A5FA" />
+          <stop offset="100%" stopColor="#2563EB" />
+        </linearGradient>
+      </defs>
+      {/* Background Soft Glow */}
+      <rect x="2" y="2" width="24" height="24" rx="8" fill="#3B82F6" fillOpacity="0.08" />
+      {/* Takeaway Paper Cup Body */}
+      <path
+        d="M8 9.5l1.4 12c.1 1.1 1.1 1.9 2.2 1.9h4.8c1.1 0 2.1-.8 2.2-1.9l1.4-12H8z"
+        fill="#3B82F6"
+        fillOpacity="0.16"
+        stroke="url(#kpiOrderGrad)"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      {/* Cup Lid with Beveled Lip */}
+      <path
+        d="M6.5 8h15c.8 0 1.5-.6 1.5-1.4 0-.8-.7-1.4-1.5-1.4h-15C5.7 5.2 5 5.8 5 6.6c0 .8.7 1.4 1.5 1.4z"
+        fill="#2563EB"
+        fillOpacity="0.25"
+        stroke="url(#kpiOrderGrad)"
+        strokeWidth="1.6"
+      />
+      {/* Cup Sleeve Grip Band */}
+      <path
+        d="M8.7 13.5h10.6l-.6 5H9.3l-.6-5z"
+        fill="url(#kpiOrderGrad)"
+        fillOpacity="0.3"
+      />
+      {/* Steam Wisps */}
+      <path
+        d="M11.5 3.5c.5-.8 1.5-1.2 2.5-.8M16.5 4c.4-.7 1.2-1 2-.6"
+        stroke="#3B82F6"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function PoursMetricSvg({ className = 'w-6 h-6' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 28 28" fill="none" className={className} aria-label="Completed Pours Icon">
+      <defs>
+        <linearGradient id="kpiPourGrad" x1="3" y1="3" x2="25" y2="25" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#34D399" />
+          <stop offset="100%" stopColor="#059669" />
+        </linearGradient>
+      </defs>
+      {/* Background Soft Glow */}
+      <rect x="2" y="2" width="24" height="24" rx="8" fill="#10B981" fillOpacity="0.08" />
+      {/* Automated Airpot Spout & Relay Head */}
+      <rect x="10" y="3" width="8" height="3" rx="1.5" fill="url(#kpiPourGrad)" />
+      <path d="M12.5 6v2.5M15.5 6v2.5" stroke="#059669" strokeWidth="1.6" strokeLinecap="round" />
+      {/* Dynamic Pouring Stream */}
+      <path
+        d="M14 8.5v5.5"
+        stroke="url(#kpiPourGrad)"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeDasharray="1.5 2"
+      />
+      {/* Receiver Cup with Verified Checkmark */}
+      <path
+        d="M7 15l1.2 7c.1.9.9 1.6 1.8 1.6h8c.9 0 1.7-.7 1.8-1.6l1.2-7H7z"
+        fill="#10B981"
+        fillOpacity="0.18"
+        stroke="url(#kpiPourGrad)"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+      {/* Confirmed Success Checkmark inside Cup */}
+      <path
+        d="M10.8 19.2l2.2 2.2 4.4-4.6"
+        stroke="#047857"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function LedgerMetricSvg({ className = 'w-6 h-6' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 28 28" fill="none" className={className} aria-label="Historical Orders Icon">
+      <defs>
+        <linearGradient id="kpiLedgerGrad" x1="3" y1="3" x2="25" y2="25" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#A78BFA" />
+          <stop offset="100%" stopColor="#7C3AED" />
+        </linearGradient>
+      </defs>
+      {/* Background Soft Glow */}
+      <rect x="2" y="2" width="24" height="24" rx="8" fill="#8B5CF6" fillOpacity="0.08" />
+      {/* Stepped Performance Bars */}
+      <rect x="5.5" y="16.5" width="4" height="6.5" rx="1.8" fill="url(#kpiLedgerGrad)" fillOpacity="0.4" />
+      <rect x="12" y="12" width="4" height="11" rx="1.8" fill="url(#kpiLedgerGrad)" fillOpacity="0.7" />
+      <rect x="18.5" y="7.5" width="4" height="15.5" rx="1.8" fill="url(#kpiLedgerGrad)" />
+      {/* Ascending Trend Trajectory with Directional Arrow */}
+      <path
+        d="M6.5 12.5l5.2-4.5 4.5 3 5.5-5.5"
+        stroke="#6D28D9"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M21.7 5.5h-4.2M21.7 5.5v4.2"
+        stroke="#6D28D9"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 
@@ -162,17 +321,17 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
     <div className="admin-page min-h-screen pb-16 font-sans">
       
       {/* ── Top Navigation Bar ── */}
-      <header className="admin-header px-6 py-3.5 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+      <header className="admin-header px-6 py-3.5 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-4">
           <img
             src={tricoffLogo}
             alt="TRICOFF"
             className="h-8 w-auto"
           />
-          <div className="hidden sm:block h-5 w-px bg-stone-300 dark:bg-stone-700" />
+          <div className="hidden sm:block h-4 w-1 rounded-full bg-black/10 dark:bg-white/10" />
           <div className="hidden sm:flex items-center gap-2">
             <span className="font-semibold text-sm admin-text">Kiosk Operations Console</span>
-            <span className="text-[11px] font-mono admin-faint px-1.5 py-0.5 rounded bg-stone-200/60 dark:bg-stone-800">
+            <span className="text-[11px] font-mono admin-faint px-2 py-0.5 rounded-full bg-black/[0.04] dark:bg-white/[0.06]">
               Rev. 2 Airpot
             </span>
           </div>
@@ -247,59 +406,59 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Revenue Today */}
-            <div className="admin-card p-5 relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold admin-text-3">Revenue Today</span>
-                <div className="w-8 h-8 rounded-xl bg-[#A5754A]/10 flex items-center justify-center text-[#A5754A]">
-                  <PhilippinePeso className="w-4 h-4" />
+            <div className="admin-card p-5 relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-xs font-bold text-[#644B37] dark:text-stone-300">Revenue Today</span>
+                <div className="w-10 h-10 rounded-2xl bg-white dark:bg-stone-800 shadow-2xs flex items-center justify-center p-2 text-[#A5754A] dark:text-amber-400">
+                  <RevenueMetricSvg className="w-6 h-6" />
                 </div>
               </div>
-              <p className="text-3xl font-extrabold font-money text-[#442713] dark:text-[#FBF9F5] tabular-nums">
+              <p className="text-3xl font-extrabold font-money text-[#442713] dark:text-[#FBF9F5] tabular-nums tracking-tight">
                 ₱{stats.revenueToday}.00
               </p>
-              <p className="text-[11px] admin-faint mt-1">Confirmed settled orders</p>
+              <p className="text-[11px] text-[#A5754A] dark:text-amber-400 font-medium mt-1">Confirmed settled orders</p>
             </div>
 
             {/* Orders Today */}
-            <div className="admin-card p-5 relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold admin-text-3">Orders Today</span>
-                <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400">
-                  <ShoppingBag className="w-4 h-4" />
+            <div className="admin-card p-5 relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-xs font-bold text-[#644B37] dark:text-stone-300">Orders Today</span>
+                <div className="w-10 h-10 rounded-2xl bg-white dark:bg-stone-800 shadow-2xs flex items-center justify-center p-2 text-blue-600 dark:text-blue-400">
+                  <OrdersMetricSvg className="w-6 h-6" />
                 </div>
               </div>
-              <p className="text-3xl font-extrabold font-mono admin-text tabular-nums">
+              <p className="text-3xl font-extrabold font-mono text-[#442713] dark:text-stone-100 tabular-nums tracking-tight">
                 {stats.ordersToday}
               </p>
-              <p className="text-[11px] admin-faint mt-1">Created since midnight</p>
+              <p className="text-[11px] text-blue-600 dark:text-blue-400 font-medium mt-1">Created since midnight</p>
             </div>
 
             {/* Successful Pours */}
-            <div className="admin-card p-5 relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold admin-text-3">Completed Pours</span>
-                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                  <CheckCircle2 className="w-4 h-4" />
+            <div className="admin-card p-5 relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-xs font-bold text-[#644B37] dark:text-stone-300">Completed Pours</span>
+                <div className="w-10 h-10 rounded-2xl bg-white dark:bg-stone-800 shadow-2xs flex items-center justify-center p-2 text-emerald-600 dark:text-emerald-400">
+                  <PoursMetricSvg className="w-6 h-6" />
                 </div>
               </div>
-              <p className="text-3xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">
+              <p className="text-3xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400 tabular-nums tracking-tight">
                 {stats.successfulPours}
               </p>
-              <p className="text-[11px] admin-faint mt-1">Successfully dispensed cups</p>
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-1">Successfully dispensed cups</p>
             </div>
 
             {/* Total Registered Orders */}
-            <div className="admin-card p-5 relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold admin-text-3">Total Historical Orders</span>
-                <div className="w-8 h-8 rounded-xl bg-stone-500/10 flex items-center justify-center text-stone-600 dark:text-stone-300">
-                  <TrendingUp className="w-4 h-4" />
+            <div className="admin-card p-5 relative overflow-hidden transition-all duration-300 hover:-translate-y-0.5">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-xs font-bold text-[#644B37] dark:text-stone-300">Total Historical Orders</span>
+                <div className="w-10 h-10 rounded-2xl bg-white dark:bg-stone-800 shadow-2xs flex items-center justify-center p-2 text-purple-600 dark:text-purple-400">
+                  <LedgerMetricSvg className="w-6 h-6" />
                 </div>
               </div>
-              <p className="text-3xl font-extrabold font-mono admin-text tabular-nums">
+              <p className="text-3xl font-extrabold font-mono text-[#442713] dark:text-stone-100 tabular-nums tracking-tight">
                 {stats.totalOrders}
               </p>
-              <p className="text-[11px] admin-faint mt-1">Recorded in orders.json</p>
+              <p className="text-[11px] text-purple-600 dark:text-purple-400 font-medium mt-1">Recorded in orders.json</p>
             </div>
           </div>
         </section>
@@ -335,13 +494,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               return (
                 <div
                   key={slot}
-                  className="admin-card p-6 flex flex-col justify-between border border-stone-200/90 dark:border-stone-800"
+                  className="admin-card p-6 flex flex-col justify-between"
                 >
                   <div>
                     {/* Slot Header */}
                     <div className="flex items-start justify-between gap-3 mb-4">
                       <div className="flex items-center gap-3">
-                        <span className="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-700 dark:text-amber-400 font-extrabold flex items-center justify-center text-base font-mono">
+                        <span className="w-10 h-10 rounded-2xl bg-amber-500/15 text-amber-800 dark:text-amber-400 font-extrabold flex items-center justify-center text-base font-mono">
                           {slot}
                         </span>
                         <div>
@@ -358,12 +517,12 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       <img
                         src={drink.image}
                         alt={drink.name}
-                        className="w-10 h-10 rounded-xl object-cover bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700"
+                        className="w-11 h-11 rounded-2xl object-cover bg-stone-100 dark:bg-stone-800 shadow-2xs"
                       />
                     </div>
 
                     {/* Spec Summary */}
-                    <div className="p-3 admin-inset rounded-xl text-xs space-y-1 mb-5">
+                    <div className="p-3.5 admin-inset rounded-2xl text-xs space-y-1.5 mb-5">
                       <div className="flex justify-between">
                         <span className="admin-text-3">Target Volume:</span>
                         <span className="font-semibold admin-text">{drink.volume}</span>
@@ -425,7 +584,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   </div>
 
                   {/* Actions for this Slot */}
-                  <div className="space-y-2 pt-2 border-t border-stone-200/60 dark:border-stone-800">
+                  <div className="space-y-2 pt-3">
                     {/* Save Changes Button */}
                     <button
                       type="button"
@@ -434,7 +593,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       className={`w-full py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
                         isEdited
                           ? 'bg-[#442713] hover:bg-[#644B37] text-white shadow-xs'
-                          : 'bg-stone-200/50 text-stone-400 dark:bg-stone-800/40 dark:text-stone-600 cursor-not-allowed'
+                          : 'bg-black/[0.04] text-stone-400 dark:bg-white/[0.05] dark:text-stone-600 cursor-not-allowed'
                       }`}
                     >
                       {isSaving ? (
@@ -452,7 +611,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       type="button"
                       disabled={isTesting}
                       onClick={() => handleTestPour(slot)}
-                      className="admin-btn-secondary w-full py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="admin-btn-secondary w-full py-2.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
                     >
                       {isTesting ? (
                         <>
@@ -469,13 +628,13 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
 
                     {/* Result alert */}
                     {result === 'ok' && (
-                      <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1">
+                      <p className="text-[11px] text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-1 pt-1">
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Arm actuated successfully</span>
                       </p>
                     )}
                     {result === 'err' && (
-                      <p className="text-[11px] text-red-600 dark:text-red-400 flex items-center justify-center gap-1">
+                      <p className="text-[11px] text-red-600 dark:text-red-400 flex items-center justify-center gap-1 pt-1">
                         <XCircle className="w-3.5 h-3.5" />
                         <span>Could not communicate with airpot relay</span>
                       </p>
@@ -557,7 +716,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               )}
             </div>
 
-            <div className="mt-6 pt-4 border-t border-stone-200/60 dark:border-stone-800 flex items-center justify-between text-xs admin-faint">
+            <div className="mt-6 pt-3 flex items-center justify-between text-xs admin-faint">
               <span>QR Payment Broker:</span>
               <span className="font-mono text-stone-600 dark:text-stone-300">Port 3000 WebSocket</span>
             </div>
@@ -575,7 +734,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   </h3>
 
                   {/* Feed vs History tab */}
-                  <div className="flex p-0.5 bg-stone-200/60 dark:bg-stone-800 rounded-xl">
+                  <div className="flex p-0.5 bg-black/[0.05] dark:bg-white/[0.06] rounded-xl">
                     <button
                       type="button"
                       onClick={() => setActiveTab('feed')}
@@ -610,7 +769,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       placeholder="Search ticket, drink..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="admin-input w-full h-8 pl-8 pr-3 text-xs rounded-xl"
+                      className="admin-input w-full h-8.5 pl-8 pr-3 text-xs rounded-xl"
                     />
                   </div>
 
@@ -618,7 +777,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <button
                     type="button"
                     onClick={exportHtml}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-xs font-semibold admin-text-2 transition-colors cursor-pointer shrink-0"
+                    className="admin-btn-secondary inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer shrink-0 shadow-2xs"
                     title="Export styled HTML report"
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -627,7 +786,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   <button
                     type="button"
                     onClick={exportCsv}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-xs font-semibold admin-text-2 transition-colors cursor-pointer shrink-0"
+                    className="admin-btn-secondary inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer shrink-0 shadow-2xs"
                     title="Export plain CSV"
                   >
                     <Download className="w-3.5 h-3.5" />
@@ -645,7 +804,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                       key={filter}
                       type="button"
                       onClick={() => setHistoryFilter(filter)}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold capitalize transition-colors cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-xl text-[11px] font-semibold capitalize transition-all cursor-pointer ${
                         active
                           ? 'bg-[#442713] text-white shadow-xs dark:bg-[#A5754A]'
                           : 'admin-btn-secondary'
@@ -667,7 +826,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
                   filteredOrders.map((order) => (
                     <div
                       key={order.id}
-                      className="p-3 admin-inset rounded-2xl flex items-center justify-between gap-4 text-xs hover:border-stone-300 dark:hover:border-stone-700 transition-colors"
+                      className="p-3.5 admin-inset rounded-2xl flex items-center justify-between gap-4 text-xs hover:bg-black/[0.06] dark:hover:bg-white/[0.08] transition-colors"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <StatusBadge status={order.status} />
@@ -693,7 +852,7 @@ export function AdminDashboard({ onLogout }: AdminDashboardProps) {
               </div>
             </div>
 
-            <div className="pt-3 mt-4 border-t border-stone-200/60 dark:border-stone-800 flex items-center justify-between text-[11px] admin-faint">
+            <div className="pt-3 mt-4 flex items-center justify-between text-[11px] admin-faint">
               <span>Showing {filteredOrders.length} transaction records</span>
               <span>Persisted locally to orders.json</span>
             </div>

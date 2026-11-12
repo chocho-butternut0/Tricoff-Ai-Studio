@@ -68,7 +68,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         </div>
 
         {/* Card */}
-        <div className="admin-card p-7 shadow-xl border border-[#E8DEC8]/80 dark:border-stone-800">
+        <div className="admin-card p-7 sm:p-8 shadow-[0_18px_45px_rgba(0,0,0,0.06)] rounded-[28px]">
           <div className="flex items-center gap-2 mb-5">
             <Lock className="w-4 h-4 text-[#A5754A]" />
             <h2 className="text-sm font-semibold admin-text-2">Operator Authentication</h2>
@@ -85,7 +85,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                   type={show ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="admin-input w-full text-sm rounded-xl px-4 py-3 pr-11"
+                  className="admin-input w-full text-sm rounded-xl px-4 py-3.5 pr-11"
                   placeholder="Enter password"
                   autoFocus
                   required
@@ -93,7 +93,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 <button
                   type="button"
                   onClick={() => setShow((v) => !v)}
-                  className="admin-quiet absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                  className="admin-quiet absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer p-1"
                   tabIndex={-1}
                 >
                   {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -102,16 +102,16 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </div>
 
             {error && (
-              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700 dark:bg-red-950/50 dark:border-red-800/60 dark:text-red-300">
-                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-                {error}
+              <div className="flex items-center gap-2 p-3.5 bg-red-500/10 rounded-xl text-xs text-red-600 dark:text-red-400">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{error}</span>
               </div>
             )}
 
             <button
               type="submit"
               disabled={loading || !password}
-              className="w-full py-3.5 rounded-xl bg-[#442713] hover:bg-[#644B37] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors cursor-pointer shadow-sm"
+              className="w-full py-3.5 rounded-xl bg-[#442713] hover:bg-[#644B37] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold text-sm transition-all cursor-pointer shadow-[0_6px_20px_rgba(68,39,19,0.22)] active:scale-[0.99]"
             >
               {loading ? 'Signing in…' : 'Sign in'}
             </button>

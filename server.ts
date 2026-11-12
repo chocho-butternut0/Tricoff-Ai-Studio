@@ -474,12 +474,12 @@ function buildPaymentPage(order: Order): string {
     --md:   #5C3D1E;
     --lt:   #A07850;
     --cream:#FAF6F0;
-    --card: #FFFFFF;
-    --border: #E8DCC8;
+    --card: rgba(255, 255, 255, 0.92);
+    --border: transparent;
     --green: #1A7F5A;
-    --green-bg: #EDFAF4;
+    --green-bg: rgba(26, 127, 90, 0.12);
     --red:   #C0392B;
-    --red-bg:#FEF2F2;
+    --red-bg: rgba(192, 57, 43, 0.12);
   }
 
   html, body {
@@ -488,7 +488,7 @@ function buildPaymentPage(order: Order): string {
 
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: var(--cream);
+    background: linear-gradient(180deg, #F5F2EB 0%, #EDE7DD 50%, #E2DBD0 100%);
     color: var(--dk);
     min-height: 100vh;
     display: flex;
@@ -521,19 +521,24 @@ function buildPaymentPage(order: Order): string {
     font-weight: 700;
     letter-spacing: 0.04em;
     color: var(--md);
-    background: #F0E8DC;
-    border: 1px solid var(--border);
-    padding: 0.3rem 0.7rem;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    padding: 0.35rem 0.75rem;
     border-radius: 999px;
   }
 
   /* ── Hero Card ── */
   .hero-card {
     background: var(--card);
-    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: none;
     border-radius: 28px;
     overflow: hidden;
-    box-shadow: 0 8px 32px rgba(44,26,14,0.08);
+    box-shadow: 0 16px 40px rgba(44,26,14,0.06), 0 2px 8px rgba(0,0,0,0.02);
   }
 
   .hero-img-wrap {
@@ -583,28 +588,33 @@ function buildPaymentPage(order: Order): string {
     top: 1rem;
     right: 1rem;
     background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     color: var(--dk);
     font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     font-variant-numeric: tabular-nums;
     font-size: 1.3rem;
     font-weight: 900;
     padding: 0.35rem 0.9rem;
-    border-radius: 14px;
-    border: 1px solid rgba(232,220,200,0.6);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border-radius: 16px;
+    border: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
   }
   .hero-slot-badge {
     position: absolute;
     top: 1rem;
     left: 1rem;
     background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     color: var(--dk);
     font-size: 0.68rem;
     font-weight: 800;
     letter-spacing: 0.06em;
     padding: 0.3rem 0.7rem;
     border-radius: 999px;
-    border: 1px solid rgba(232,220,200,0.6);
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   }
 
   .hero-body {
@@ -627,21 +637,25 @@ function buildPaymentPage(order: Order): string {
     font-size: 0.68rem;
     font-weight: 600;
     color: var(--md);
-    background: #F5EDE0;
-    border: 1px solid var(--border);
-    padding: 0.25rem 0.65rem;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    padding: 0.28rem 0.7rem;
     border-radius: 999px;
   }
 
   /* ── Order Summary Strip ── */
   .summary-strip {
     background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 1rem 1.15rem;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: none;
+    border-radius: 24px;
+    padding: 1.1rem 1.25rem;
     display: flex;
     flex-direction: column;
-    gap: 0.55rem;
+    gap: 0.6rem;
+    box-shadow: 0 10px 30px rgba(44,26,14,0.04);
   }
   .summary-row {
     display: flex;
@@ -661,8 +675,9 @@ function buildPaymentPage(order: Order): string {
   }
   .summary-divider {
     height: 1px;
-    background: var(--border);
-    margin: 0.1rem 0;
+    background: rgba(0, 0, 0, 0.05);
+    margin: 0.15rem 0;
+    border: none;
   }
   .summary-total-label {
     font-size: 0.85rem;
@@ -670,7 +685,7 @@ function buildPaymentPage(order: Order): string {
     color: var(--dk);
   }
   .summary-total-value {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     font-weight: 900;
     color: var(--dk);
     font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -682,15 +697,18 @@ function buildPaymentPage(order: Order): string {
     display: flex;
     align-items: center;
     gap: 0.85rem;
-    background: #F5EDE0;
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 0.9rem 1rem;
+    background: rgba(245, 237, 224, 0.75);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: none;
+    border-radius: 22px;
+    padding: 0.95rem 1.1rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.03);
   }
   .slot-num {
     width: 2.4rem;
     height: 2.4rem;
-    border-radius: 12px;
+    border-radius: 14px;
     background: var(--dk);
     color: #fff;
     font-size: 1.1rem;
@@ -735,14 +753,15 @@ function buildPaymentPage(order: Order): string {
   .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
   .btn-confirm {
-    background: var(--dk);
+    background: #442713;
     color: #fff;
-    box-shadow: 0 6px 20px rgba(44,26,14,0.22);
+    box-shadow: 0 10px 25px rgba(68,39,19,0.25);
     font-size: 1rem;
     padding: 1.1rem;
-    border-radius: 18px;
+    border-radius: 20px;
+    border: none;
   }
-  .btn-confirm:not(:disabled):hover { opacity: 0.88; }
+  .btn-confirm:not(:disabled):hover { opacity: 0.92; }
 
   .btn-cancel {
     background: transparent;
@@ -750,6 +769,7 @@ function buildPaymentPage(order: Order): string {
     font-size: 0.85rem;
     font-weight: 600;
     padding: 0.7rem;
+    border: none;
   }
   .btn-cancel:hover { color: var(--red); }
 
@@ -772,10 +792,12 @@ function buildPaymentPage(order: Order): string {
     align-items: center;
     text-align: center;
     background: var(--card);
-    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: none;
     border-radius: 28px;
     padding: 2.5rem 1.5rem 2rem;
-    box-shadow: 0 8px 32px rgba(44,26,14,0.08);
+    box-shadow: 0 16px 40px rgba(44,26,14,0.06);
     gap: 0;
   }
   .result-screen.show { display: flex; }
@@ -789,8 +811,8 @@ function buildPaymentPage(order: Order): string {
     justify-content: center;
     margin-bottom: 1.25rem;
   }
-  .result-icon.ok  { background: var(--green-bg); color: var(--green); border: 2px solid #A7F3D0; }
-  .result-icon.err { background: var(--red-bg);   color: var(--red);   border: 2px solid #FECACA; }
+  .result-icon.ok  { background: var(--green-bg); color: var(--green); border: none; }
+  .result-icon.err { background: var(--red-bg);   color: var(--red);   border: none; }
 
   .result-title {
     font-size: 1.5rem;
@@ -807,16 +829,19 @@ function buildPaymentPage(order: Order): string {
   }
   .receipt {
     width: 100%;
-    background: var(--cream);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 0.9rem 1rem;
+    background: rgba(250, 247, 242, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: none;
+    border-radius: 20px;
+    padding: 1rem 1.1rem;
     text-align: left;
     font-size: 0.78rem;
     display: flex;
     flex-direction: column;
     gap: 0.45rem;
     margin-bottom: 1.25rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
   }
   .receipt-row {
     display: flex;

@@ -115,7 +115,7 @@ export const TricoffKioskMachine: React.FC<TricoffKioskMachineProps> = ({
       
       {/* Offline Alert Banner */}
       {!machineOnline && !esp32Mock && (
-        <div className="px-6 py-2 bg-red-50 border-b border-red-200 text-center shrink-0">
+        <div className="px-6 py-2.5 bg-red-500/10 text-center shrink-0">
           <p className="text-xs sm:text-sm text-red-700 font-medium">
             Machine currently unavailable. Waiting for hardware controller reconnect.
           </p>

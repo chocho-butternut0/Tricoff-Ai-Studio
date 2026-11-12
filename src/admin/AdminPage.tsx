@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { LoginPage } from './LoginPage';
 import { AdminDashboard } from './AdminDashboard';
 
@@ -16,7 +17,7 @@ export function AdminPage() {
   if (authed === null) {
     return (
       <div className="admin-page min-h-screen flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
+        <Loader2 className="w-8 h-8 text-[#A5754A] animate-spin" />
       </div>
     );
   }
